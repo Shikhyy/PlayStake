@@ -1,0 +1,13 @@
+{
+  "name": "playstake-deploy",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "deploy": "tsx index.ts"
+  },
+  "dependencies": {
+    "@onelabs/sui": "^1.26.2",
+    "dotenv": "^17.3.1",
+    "tsx": "^4.21.0"
+  }
+}
