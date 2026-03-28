@@ -5,6 +5,7 @@ import { useSuiClient } from "@onelabs/dapp-kit";
 import {
   useMarket,
   usePlaceBet,
+  useLiveMarketOdds,
   type BetOnChain,
   type PerformanceClaim,
 } from "../hooks/useMarket";
@@ -80,6 +81,8 @@ export default function MarketDetail() {
   const { market, isLoading: marketLoading, error: marketError } = useMarket(id || null);
   const { bets, isLoading: betsLoading, error: betsError } = useMarketBets(market?.betIds || []);
   const { placeBet, isLoading: placingBet, error: placeError } = usePlaceBet();
+  
+  const { yesOdds, noOdds, isLoading: oddsLoading } = useLiveMarketOdds(id || null);
 
   const [showBetModal, setShowBetModal] = useState(false);
   const [subject, setSubject] = useState("");
@@ -91,9 +94,7 @@ export default function MarketDetail() {
   const [betSide, setBetSide] = useState<"YES" | "NO">("YES");
 
   const totalPool = market ? market.yesPool + market.noPool : 0;
-  const effectiveOdds = totalPool > 0 && market
-    ? Number((totalPool / Math.max(market.yesPool, 1)).toFixed(2))
-    : 1.0;
+  const effectiveOdds = betSide === "YES" ? yesOdds / 100 : noOdds / 100;
   const yesPct = totalPool > 0 && market ? Math.round((market.yesPool / totalPool) * 100) : 50;
   const now = Date.now();
   const deadlineStr = market
@@ -191,7 +192,7 @@ export default function MarketDetail() {
               </div>
 
               {/* Pool stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
                   <p className="text-2xl font-bold font-mono text-accent-lavender">
                     {market.yesPool.toFixed(2)}
@@ -205,12 +206,24 @@ export default function MarketDetail() {
                   <p className="text-xs text-dim font-tech mt-1">NO Pool (USDO)</p>
                 </div>
                 <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
-                  <p className="text-2xl font-bold font-mono">{bets.length}</p>
-                  <p className="text-xs text-dim font-tech mt-1">Total Bets</p>
+                  <p className={`text-2xl font-bold font-mono ${yesOdds >= 200 ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {(yesOdds / 100).toFixed(2)}x
+                  </p>
+                  <p className="text-xs text-dim font-tech mt-1 flex items-center justify-center gap-1">
+                    YES Odds {oddsLoading && <span className="w-2 h-2 bg-accent-lavender rounded-full animate-pulse"></span>}
+                  </p>
                 </div>
                 <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
-                  <p className="text-2xl font-bold font-mono">{effectiveOdds}x</p>
-                  <p className="text-xs text-dim font-tech mt-1">Est. Odds</p>
+                  <p className={`text-2xl font-bold font-mono ${noOdds >= 200 ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {(noOdds / 100).toFixed(2)}x
+                  </p>
+                  <p className="text-xs text-dim font-tech mt-1 flex items-center justify-center gap-1">
+                    NO Odds {oddsLoading && <span className="w-2 h-2 bg-accent-crimson rounded-full animate-pulse"></span>}
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
+                  <p className="text-2xl font-bold font-mono">{bets.length}</p>
+                  <p className="text-xs text-dim font-tech mt-1">Total Bets</p>
                 </div>
               </div>
 
@@ -252,7 +265,10 @@ export default function MarketDetail() {
                     <div className="p-4 rounded-xl" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-dim)' }}>
                       <div className="text-sm text-dim font-tech mb-1">Market</div>
                       <div className="font-semibold">Match #{market.matchId}</div>
-                      <div className="text-xs text-dim font-mono mt-1">Odds: {effectiveOdds}x</div>
+                      <div className="flex gap-4 mt-2 text-xs font-mono">
+                        <span className="text-green-400">YES: {(yesOdds / 100).toFixed(2)}x</span>
+                        <span className="text-red-400">NO: {(noOdds / 100).toFixed(2)}x</span>
+                      </div>
                     </div>
 
                     <div>
@@ -327,6 +343,9 @@ export default function MarketDetail() {
                         <span className="text-xl font-bold font-mono text-[#00FF88]">
                           {(stake * effectiveOdds).toFixed(2)} USDO
                         </span>
+                      </div>
+                      <div className="text-xs text-dim font-mono mt-1">
+                        Live odds: {betSide === "YES" ? (yesOdds / 100).toFixed(2) : (noOdds / 100).toFixed(2)}x (updates every 3s)
                       </div>
                     </div>
 

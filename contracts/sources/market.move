@@ -4,9 +4,7 @@ module playstake::market {
     use sui::object::UID;
     use sui::tx_context::TxContext;
     use sui::transfer;
-    use sui::vec_map::VecMap;
     use sui::event::emit;
-    use sui::sui::SUI;
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin};
 
@@ -28,12 +26,12 @@ module playstake::market {
         settled: bool,
     }
 
-    public struct Market has key {
+    public struct Market<phantom T> has key {
         id: UID,
         match_id: u64,
         yes_pool: u64,
         no_pool: u64,
-        pool: Balance<SUI>,
+        pool: Balance<T>,
         bet_ids: vector<address>,
         deadline_ms: u64,
         finalized: bool,
@@ -41,8 +39,12 @@ module playstake::market {
 
     const E_MARKET_CLOSED: u64 = 1;
     const E_ZERO_STAKE: u64 = 5;
+    const E_MIN_STAKE_NOT_MET: u64 = 6;
+    const E_STAKE_TOO_HIGH: u64 = 7;
     const MIN_ODDS: u64 = 105;
     const MAX_ODDS: u64 = 1000;
+    const MIN_STAKE: u64 = 1000000; // 1 OCT minimum (9 decimals)
+    const MAX_STAKE: u64 = 10000000000; // 10,000 OCT maximum
 
     public struct MarketCreated has copy, drop {
         market_id: address,
@@ -50,12 +52,12 @@ module playstake::market {
         deadline_ms: u64,
     }
 
-    public entry fun create_market(
+    public entry fun create_market<T>(
         match_id: u64,
         deadline_ms: u64,
         ctx: &mut TxContext,
     ) {
-        let market = Market {
+        let market = Market<T> {
             id: sui::object::new(ctx),
             match_id,
             yes_pool: 0,
@@ -74,20 +76,22 @@ module playstake::market {
         transfer::share_object(market);
     }
 
-    public entry fun place_bet(
-        market: &mut Market,
+    public entry fun place_bet<T>(
+        market: &mut Market<T>,
         subject: address,
         game: vector<u8>,
         stat: u8,
         operator: u8,
         threshold: u64,
-        payment: Coin<SUI>,
+        payment: Coin<T>,
         is_yes: bool,
         ctx: &mut TxContext,
     ) {
         assert!(!market.finalized, E_MARKET_CLOSED);
         let stake = coin::value(&payment);
         assert!(stake > 0, E_ZERO_STAKE);
+        assert!(stake >= MIN_STAKE, E_MIN_STAKE_NOT_MET);
+        assert!(stake <= MAX_STAKE, E_STAKE_TOO_HIGH);
 
         balance::join(&mut market.pool, coin::into_balance(payment));
 
@@ -120,12 +124,12 @@ module playstake::market {
         PerformanceClaim { stat, operator, threshold }
     }
 
-    public fun get_odds(market: &Market): (u64, u64) {
+    public fun get_odds<T>(market: &Market<T>): (u64, u64) {
         (market.yes_pool, market.no_pool)
     }
 
-    public fun is_finalized(market: &Market): bool { market.finalized }
-    public fun match_id(market: &Market): u64 { market.match_id }
+    public fun is_finalized<T>(market: &Market<T>): bool { market.finalized }
+    public fun match_id<T>(market: &Market<T>): u64 { market.match_id }
 
     fun compute_odds(yes_pool: u64, no_pool: u64, stake: u64, is_yes: bool): u64 {
         let y = yes_pool + 1;
@@ -167,11 +171,11 @@ module playstake::market {
         bet.settled = true;
     }
 
-    public(package) fun finalize(market: &mut Market) {
+    public(package) fun finalize<T>(market: &mut Market<T>) {
         market.finalized = true;
     }
 
-    public(package) fun pay_winner(market: &mut Market, amount: u64, recipient: address, ctx: &mut TxContext) {
+    public(package) fun pay_winner<T>(market: &mut Market<T>, amount: u64, recipient: address, ctx: &mut TxContext) {
         let available = balance::value(&market.pool);
         let actual_amount = if (amount > available) available else amount;
         if (actual_amount > 0) {

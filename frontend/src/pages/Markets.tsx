@@ -4,6 +4,7 @@ import {
   usePlaceBet,
   useCreateMarket,
   useAllMarkets,
+  useLiveMarketOdds,
 } from "../hooks/useMarket";
 import { Icons } from "../components/Icons";
 import { SUPPORTED_GAMES } from "../constants/games";
@@ -191,6 +192,8 @@ function MarketCard({
   };
   onPlaceBet: () => void;
 }) {
+  const { yesOdds, noOdds, isLoading: oddsLoading } = useLiveMarketOdds(market.objectId);
+  
   const totalPool = market.yesPool + market.noPool;
   const yesPct = totalPool > 0 ? Math.round((market.yesPool / totalPool) * 100) : 50;
   const now = Date.now();
@@ -202,7 +205,7 @@ function MarketCard({
     <div className="border border-dim bg-panel group hover:border-accent-primary transition-colors flex flex-col justify-between h-full">
       <div className="flex justify-between items-center p-4 border-b border-dim bg-surface">
         <div className="font-mono text-[10px] text-dim uppercase">ID: {market.objectId.slice(0, 8)}...</div>
-        <div className={`font-mono text-[10px] px-2 py-1 uppercase font-bold border ${market.finalized ? "bg-surface border-dim text-dim" : "bg-accent-primary border-accent-primary text-void group-hover:bg-bright group-hover:border-bright transition-colors"}`}>
+        <div className={`font-mono text-[10px] px-2 py-1 uppercase font-bold border ${market.finalized ? "bg-surface border-dim text-dim" : "bg-elevated border-accent-primary text-accent-primary group-hover:bg-accent-primary group-hover:text-void transition-colors"}`}>
           {market.finalized ? "Settled" : timeLeft}
         </div>
       </div>
@@ -227,11 +230,26 @@ function MarketCard({
             </div>
             <div className="text-right font-mono text-[10px] text-dim mt-1">VOL: {market.betCount} POSITIONS</div>
           </div>
+
+          <div className="flex justify-between items-center pt-2 border-t border-dim/30">
+            <div className="text-center">
+              <div className="font-mono text-lg font-bold text-status-success">{(yesOdds / 100).toFixed(2)}x</div>
+              <div className="font-mono text-[8px] text-dim uppercase">YES</div>
+            </div>
+            <div className="flex items-center gap-1">
+              {oddsLoading && <span className="w-1.5 h-1.5 bg-accent-primary rounded-full animate-pulse" />}
+              <span className="font-mono text-[8px] text-dim">LIVE</span>
+            </div>
+            <div className="text-center">
+              <div className="font-mono text-lg font-bold text-status-error">{(noOdds / 100).toFixed(2)}x</div>
+              <div className="font-mono text-[8px] text-dim uppercase">NO</div>
+            </div>
+          </div>
         </div>
       </div>
 
       {!market.finalized && (
-        <button onClick={onPlaceBet} className="w-full py-3 font-display font-bold uppercase tracking-widest bg-void text-bright border-t border-dim group-hover:bg-accent-primary group-hover:text-void group-hover:border-accent-primary transition-colors">
+        <button onClick={onPlaceBet} className="w-full py-3 font-display font-bold uppercase tracking-widest bg-surface text-bright border-t border-dim hover:bg-accent-primary hover:text-void hover:border-accent-primary transition-all">
           Initialize Position
         </button>
       )}
@@ -310,7 +328,7 @@ export default function Markets() {
               <button
                 onClick={handleCreateMarket}
                 disabled={isCreating}
-                className="w-full py-3.5 font-display font-bold uppercase tracking-widest bg-accent-primary text-void hover:bg-[#B0DF00] transition-colors disabled:opacity-50"
+                className="w-full py-3.5 font-display font-bold uppercase tracking-widest bg-accent-primary text-black hover:bg-white hover:text-black transition-all disabled:opacity-50"
               >
                 {isCreating ? "Deploying..." : "Execute Deploy"}
               </button>

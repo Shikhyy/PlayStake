@@ -3,6 +3,47 @@ import { useCurrentAccount, useSuiClient } from "@onelabs/dapp-kit";
 import { usePostMatchResult, useAddPlayerStats, useAllMatchResults } from "../hooks/useMarket";
 import { Icons } from "../components/Icons";
 
+const ORACLE_CAP_ID = "0x797af785ba04d3de243eb2e8e9d80a5f6c3eb71f19360b3c0fdedba11b105de4";
+
+const GAMES = ["Call of Duty Mobile", "PUBG Mobile", "Valorant", "Arena of Valor", "League of Legends", "Fortnite"];
+
+async function generateAIMatchStats(game: string, playerCount: number = 8) {
+  const gameSpecifics: Record<string, { damageRange: [number, number], killsRange: [number, number], goldRange?: [number, number], placement: boolean }> = {
+    "Call of Duty Mobile": { damageRange: [2000, 12000], killsRange: [3, 25], placement: true },
+    "PUBG Mobile": { damageRange: [500, 8000], killsRange: [0, 15], placement: true },
+    "Valorant": { damageRange: [3000, 15000], killsRange: [5, 30], placement: false },
+    "Arena of Valor": { damageRange: [5000, 25000], killsRange: [2, 15], goldRange: [5000, 25000], placement: false },
+    "League of Legends": { damageRange: [8000, 30000], killsRange: [1, 12], goldRange: [8000, 20000], placement: false },
+    "Fortnite": { damageRange: [1000, 10000], killsRange: [0, 20], placement: true },
+  };
+  
+  const spec = gameSpecifics[game] || gameSpecifics["Call of Duty Mobile"];
+  const players: PlayerStat[] = [];
+  
+  for (let i = 0; i < playerCount; i++) {
+    const damage = Math.floor(spec.damageRange[0] + Math.random() * (spec.damageRange[1] - spec.damageRange[0]));
+    const kills = Math.floor(spec.killsRange[0] + Math.random() * (spec.killsRange[1] - spec.killsRange[0]));
+    const placement = spec.placement ? Math.floor(1 + Math.random() * playerCount) : 1;
+    const gold = spec.goldRange ? Math.floor(spec.goldRange[0] + Math.random() * (spec.goldRange[1] - spec.goldRange[0])) : 0;
+    
+    players.push({
+      address: `0x${Math.random().toString(16).slice(2, 42)}`,
+      damage,
+      kills,
+      gold,
+      placement,
+      alive: kills > 0 || placement <= Math.floor(playerCount / 2),
+    });
+  }
+  
+  players.sort((a, b) => {
+    if (spec.placement) return a.placement - b.placement;
+    return b.kills - a.kills;
+  });
+  
+  return { game, players, matchId: Date.now() };
+}
+
 interface PlayerStat {
   address: string;
   damage: number;
@@ -45,12 +86,46 @@ function parseVecMap(vecMap: unknown): Map<string, PlayerStat> {
 export default function Live() {
   const [selectedResult, setSelectedResult] = useState<MatchResultFull | null>(null);
   const [isLoadingResult, setIsLoadingResult] = useState(false);
+  const [aiGame, setAiGame] = useState("Call of Duty Mobile");
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const account = useCurrentAccount();
   const client = useSuiClient();
   const { results, isLoading: resultsLoading } = useAllMatchResults();
   const { postResult, isLoading: postingResult } = usePostMatchResult();
   const { addStats, isLoading: addingStats } = useAddPlayerStats();
+
+  const handleAIGenerate = async () => {
+    setAiGenerating(true);
+    try {
+      const matchData = await generateAIMatchStats(aiGame, 8);
+      
+      console.log("🤖 AI Generated Match:", matchData);
+      
+      const matchId = Math.floor(Math.random() * 100000);
+      
+      await postResult(ORACLE_CAP_ID, matchId, Date.now());
+      
+      await new Promise(r => setTimeout(r, 2000));
+      
+      for (const player of matchData.players) {
+        await addStats(
+          results[0]?.objectId || "0x0",
+          player.address,
+          player.damage,
+          player.kills,
+          player.placement,
+          player.gold
+        );
+      }
+      
+      alert(`🤖 AI Generated Match!\n\nGame: ${matchData.game}\nPlayers: ${matchData.players.length}\nTop Damage: ${Math.max(...matchData.players.map(p => p.damage))}\nTop Kills: ${Math.max(...matchData.players.map(p => p.kills))}`);
+    } catch (e) {
+      console.error("AI Generation error:", e);
+      alert("Error generating match. Check console.");
+    }
+    setAiGenerating(false);
+  };
 
   const fetchMatchDetail = useCallback(async (objectId: string) => {
     setIsLoadingResult(true);
@@ -135,6 +210,20 @@ export default function Live() {
         </div>
         
         <div className="flex items-center gap-4">
+          <select
+            value={aiGame}
+            onChange={(e) => setAiGame(e.target.value)}
+            className="px-3 py-2 font-mono text-[10px] uppercase bg-void border border-dim text-bright focus:border-accent-primary outline-none"
+          >
+            {GAMES.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+          <button
+            onClick={handleAIGenerate}
+            disabled={aiGenerating || !account}
+            className="px-4 py-2 font-mono text-[10px] uppercase font-bold border border-accent-primary text-accent-primary hover:bg-accent-primary hover:text-void transition-colors disabled:opacity-50"
+          >
+            {aiGenerating ? "[ GENERATING... ]" : "[ 🤖 AI SIMULATE MATCH ]"}
+          </button>
           <button
             onClick={handlePostToChain}
             disabled={postingResult || addingStats || !account}

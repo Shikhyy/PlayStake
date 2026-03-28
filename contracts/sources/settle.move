@@ -34,8 +34,8 @@ module playstake::settle {
         won: bool,
     }
 
-    public entry fun settle_bet_with_profile(
-        market: &mut Market,
+    public entry fun settle_bet_with_profile<T>(
+        market: &mut Market<T>,
         bet: Bet,
         result: &MatchResult,
         profile: &mut PlayerProfile,
@@ -79,8 +79,8 @@ module playstake::settle {
         playstake::player::update_on_settlement(profile, won, stake, payout, game, ctx);
     }
 
-    public entry fun settle_bet_entry(
-        market: &mut Market,
+    public entry fun settle_bet_entry<T>(
+        market: &mut Market<T>,
         bet: Bet,
         result: &MatchResult,
         ctx: &mut TxContext,

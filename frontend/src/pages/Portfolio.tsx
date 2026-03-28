@@ -42,7 +42,7 @@ export default function Portfolio() {
   const account = useCurrentAccount();
   const walletAddress = account?.address ?? null;
 
-  const { profile, isLoading: profileLoading } = usePlayerProfile(walletAddress);
+  const { profile, isLoading: profileLoading, refetch: refetchProfile } = usePlayerProfile(walletAddress);
   const { createProfile, isLoading: creating, txHash: createTx, error: createError } = useCreateProfile();
   const { bets, isLoading: _betsLoading } = useMyBets(walletAddress);
   const { records: _settlements } = useMySettlements(walletAddress);
@@ -264,7 +264,10 @@ export default function Portfolio() {
               {createError && <div className="p-3 bg-void border border-status-error text-status-error text-xs font-mono uppercase">ERR: {createError}</div>}
               {createTx && <div className="p-3 bg-void border border-status-success text-status-success text-xs font-mono uppercase">DEPLOYED_TX: {createTx.slice(0, 20)}...</div>}
               <button
-                onClick={() => createProfile(newUsername || "Player")}
+                onClick={async () => {
+                  await createProfile(newUsername || "Player");
+                  setTimeout(() => refetchProfile(), 3000);
+                }}
                 disabled={creating}
                 className="w-full py-4 font-display font-bold tracking-widest uppercase bg-accent-primary text-void hover:bg-[#B0DF00] transition-colors disabled:opacity-50"
               >

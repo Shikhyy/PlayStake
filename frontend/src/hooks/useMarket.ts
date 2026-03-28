@@ -1,12 +1,22 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   useCurrentWallet,
+  useCurrentAccount,
   useSignAndExecuteTransaction,
   useSuiClient,
 } from "@onelabs/dapp-kit";
 import { Transaction } from "@onelabs/sui/transactions";
 import { fromUsdo, toUsdo, MODULES, STAT, OP } from "../constants";
 import { useTxToast } from "../components/TxToast";
+import { 
+  getAllMarkets, 
+  createMarketMeta,
+  supabase,
+  subscribeToMarkets,
+  subscribeToBets,
+  getBetsByMarket,
+  type BetPosition,
+} from "../lib/supabase";
 
 export interface PerformanceClaim {
   stat: number;
@@ -110,6 +120,7 @@ export function usePlaceBet() {
 
 export function useCreateMarket() {
   const { isConnected } = useCurrentWallet();
+  const account = useCurrentAccount();
   const { mutateAsync: signAndExecute, isPending } = useSignAndExecuteTransaction();
   const { addToast, confirmToast } = useTxToast();
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -117,10 +128,17 @@ export function useCreateMarket() {
   const [status, setStatus] = useState<string>("");
 
   const createMarket = useCallback(
-    async (matchId: number, deadlineMs: number) => {
-      console.log(">>> useCreateMarket called", { isConnected, matchId, deadlineMs, MODULES: MODULES.market });
+    async (
+      matchId: number, 
+      deadlineMs: number,
+      game: string = "General",
+      stat: string = "DAMAGE",
+      operator: string = "GTE",
+      threshold: number = 0
+    ) => {
+      console.log(">>> useCreateMarket called", { isConnected, matchId, deadlineMs, game, stat, operator, threshold });
       
-      if (!isConnected) { 
+      if (!isConnected || !account) { 
         const err = "Wallet not connected";
         console.error(">>> Error:", err);
         setError(err); 
@@ -136,7 +154,7 @@ export function useCreateMarket() {
         console.log(">>> Target:", target);
         
         const tx = new Transaction();
-        tx.setGasBudget(10000000);
+        tx.setGasBudget(50000000);
         
         tx.moveCall({
           target: target,
@@ -149,6 +167,40 @@ export function useCreateMarket() {
         const result = await signAndExecute({ transaction: tx });
         
         console.log(">>> Result:", result);
+        console.log(">>> Digest:", result.digest);
+        console.log(">>> Effects:", result.effects);
+        
+        // Extract created Market object ID and store in Supabase
+        if (result.effects && typeof result.effects === 'object') {
+          const effects = result.effects as { created?: Array<{ reference?: { objectId?: string } }> };
+          if (effects.created && effects.created.length > 0) {
+            for (const created of effects.created) {
+              if (created.reference?.objectId?.startsWith('0x')) {
+                console.log(">>> Created market:", created.reference.objectId);
+                const objectId = created.reference.objectId;
+                
+                // Store in localStorage (fallback)
+                addStoredMarketId(objectId);
+                
+                // Store in Supabase (if configured)
+                if (supabase && account) {
+                  await createMarketMeta(
+                    objectId,
+                    matchId,
+                    game,
+                    stat,
+                    operator,
+                    threshold,
+                    account.address,
+                    deadlineMs
+                  );
+                  console.log(">>> Stored market in Supabase");
+                }
+              }
+            }
+          }
+        }
+        
         setStatus("Transaction submitted!");
         const digest = result.digest;
         setTxHash(digest);
@@ -157,7 +209,12 @@ export function useCreateMarket() {
         setStatus("");
       } catch (e: unknown) {
         console.error(">>> Create market error:", e);
-        const errMsg = e instanceof Error ? e.message : "Transaction failed";
+        let errMsg = "Transaction failed";
+        if (e && typeof e === 'object' && 'message' in e) {
+          errMsg = String((e as { message: unknown }).message);
+        } else if (e instanceof Error) {
+          errMsg = e.message;
+        }
         setError(errMsg);
         setStatus("");
       }
@@ -508,56 +565,127 @@ function parseMatchResultFields(objectId: string, fields: Record<string, unknown
   };
 }
 
+export function getStoredMarketIds(): string[] {
+  try {
+    const stored = localStorage.getItem("playstake_market_ids");
+    const ids = stored ? JSON.parse(stored) : [];
+    // Add known market if none exist
+    const defaultMarket = "0xb868d69da43af997a3f4fddcb96f847d985141afaf2a94aa110adefe3e4f007b";
+    if (ids.length === 0) {
+      return [defaultMarket];
+    }
+    return ids;
+  } catch {
+    return ["0xb868d69da43af997a3f4fddcb96f847d985141afaf2a94aa110adefe3e4f007b"];
+  }
+}
+
+function addStoredMarketId(id: string) {
+  const ids = getStoredMarketIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    localStorage.setItem("playstake_market_ids", JSON.stringify(ids));
+  }
+}
+
 export function useAllMarkets(): {
-  markets: MarketOnChainFull[]; isLoading: boolean; error: string | null;
+  markets: MarketOnChainFull[]; isLoading: boolean; error: string | null; refetch: () => void;
 } {
   const client = useSuiClient();
   const [markets, setMarkets] = useState<MarketOnChainFull[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<ReturnType<typeof subscribeToMarkets> | null>(null);
+
+  const loadMarkets = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const marketsMeta = await getAllMarkets();
+      console.log(">>> Got markets from Supabase:", marketsMeta.length);
+      
+      if (marketsMeta.length === 0) {
+        setMarkets([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const marketIds = marketsMeta.map(m => m.object_id);
+
+      const results = await Promise.allSettled(
+        marketIds.map(id =>
+          client.getObject({ id, options: { showContent: true } })
+        )
+      );
+      
+      const parsed: MarketOnChainFull[] = [];
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const meta = marketsMeta[i];
+        
+        if (result.status === "fulfilled") {
+          const resp = result.value;
+          const data = resp.data;
+          if (!data || (data as { dataType?: string }).dataType !== "moveObject") {
+            parsed.push({
+              objectId: meta.object_id,
+              matchId: String(meta.match_id),
+              yesPool: 0,
+              noPool: 0,
+              betCount: 0,
+              deadlineMs: meta.deadline_ms,
+              finalized: false,
+            });
+            continue;
+          }
+          const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
+          const f = content?.fields || {};
+          parsed.push(parseMarketFields(data.objectId, f));
+        } else {
+          parsed.push({
+            objectId: meta.object_id,
+            matchId: String(meta.match_id),
+            yesPool: 0,
+            noPool: 0,
+            betCount: 0,
+            deadlineMs: meta.deadline_ms,
+            finalized: false,
+          });
+        }
+      }
+      
+      console.log(">>> Loaded markets:", parsed.length);
+      parsed.sort((a, b) => Number(b.deadlineMs) - Number(a.deadlineMs));
+      setMarkets(parsed);
+    } catch (e) {
+      console.error(">>> Error loading markets:", e);
+      setError(e instanceof Error ? e.message : "Failed to load markets");
+    }
+    setIsLoading(false);
+  }, [client]);
 
   useEffect(() => {
     setIsLoading(true);
     setError(null);
+    loadMarkets();
 
-    client.queryEvents({
-      query: { MoveEventModule: { module: "market", package: MODULES.market.replace("::market", "") } },
-      limit: 50,
-      order: "descending",
-    }).then(async (resp) => {
-      const marketIds: string[] = [];
-      for (const evt of resp.data) {
-        const parsed = evt.parsedJson as { market_id?: string };
-        if (parsed?.market_id) {
-          marketIds.push(parsed.market_id);
-        }
-      }
-      const uniqueIds = [...new Set(marketIds)];
-      const results = await Promise.allSettled(
-        uniqueIds.map(id =>
-          client.getObject({ id, options: { showContent: true } })
-        )
-      );
-      const parsed: MarketOnChainFull[] = [];
-      for (const result of results) {
-        if (result.status === "rejected") continue;
-        const resp = result.value;
-        const data = resp.data;
-        if (!data || (data as { dataType?: string }).dataType !== "moveObject") continue;
-        const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
-        const f = content?.fields || {};
-        parsed.push(parseMarketFields(data.objectId, f));
-      }
-      parsed.sort((a, b) => b.deadlineMs - a.deadlineMs);
-      setMarkets(parsed);
-      setIsLoading(false);
-    }).catch((e: unknown) => {
-      setError(e instanceof Error ? e.message : "Failed to load markets");
-      setIsLoading(false);
-    });
-  }, [client]);
+    if (supabase && !channelRef.current) {
+      channelRef.current = subscribeToMarkets((payload) => {
+        console.log(">>> Realtime market update:", payload);
+        loadMarkets();
+      });
+    }
 
-  return { markets, isLoading, error };
+    return () => {
+      if (channelRef.current) {
+        supabase?.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [loadMarkets]);
+
+  return { markets, isLoading, error, refetch: loadMarkets };
 }
 
 export function useAllMatchResults(): {
@@ -730,17 +858,30 @@ function vecSetLength(vecSet: unknown): number {
 }
 
 function parsePlayerProfile(fields: Record<string, unknown>): PlayerProfileData | null {
-  const totalBets = Number(fields.total_bets || 0);
+  console.log(">>> parsePlayerProfile fields:", JSON.stringify(fields));
+  
+  const totalBets = Number(fields.total_bets || fields.total_bets || 0);
   const wins = Number(fields.wins || 0);
   const losses = Number(fields.losses || 0);
   const xp = Number(fields.xp || 0);
-  const xpToNext = Number(fields.xp_to_next || 100);
+  const xpToNext = Number(fields.xp_to_next || fields.xpToNext || 100);
   const rank = Number(fields.rank || 0);
+
+  const username = fields.username;
+  console.log(">>> username raw:", username, "type:", typeof username);
+  
+  let usernameStr = "";
+  if (Array.isArray(username)) {
+    usernameStr = String.fromCharCode(...(username as number[]));
+  } else if (typeof username === "string") {
+    usernameStr = username;
+  }
+  console.log(">>> username parsed:", usernameStr);
 
   return {
     objectId: "",
     owner: String(fields.owner || ""),
-    username: bytesToStr(fields.username),
+    username: usernameStr,
     level: Number(fields.level || 1),
     xp,
     xpToNext,
@@ -767,43 +908,80 @@ export function usePlayerProfile(walletAddress: string | null): {
   profile: PlayerProfileData | null;
   isLoading: boolean;
   error: string | null;
+  refetch: () => void;
 } {
   const client = useSuiClient();
   const [profile, setProfile] = useState<PlayerProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
+  const loadProfile = useCallback(async () => {
     if (!walletAddress) { setProfile(null); return; }
     setIsLoading(true);
     setError(null);
 
-    client.getOwnedObjects({
-      owner: walletAddress,
-      filter: { StructType: `${MODULES.player}::PlayerProfile` },
-      options: { showContent: true },
-    }).then((resp) => {
-      if (resp.data.length === 0) { setProfile(null); setIsLoading(false); return; }
-      const obj = resp.data[0];
-      const data = obj.data;
-      if (!data || (data as { dataType?: string }).dataType !== "moveObject") {
-        setProfile(null); setIsLoading(false); return;
-      }
-      const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
-      const fields = content?.fields || {};
-        const parsed = parsePlayerProfile(fields);
-      if (parsed) {
-        parsed.objectId = data.objectId;
-        setProfile(parsed);
-      }
-      setIsLoading(false);
-    }).catch((e: unknown) => {
+    try {
+      let cursor: string | undefined = undefined;
+      let foundProfile: PlayerProfileData | null = null;
+
+      do {
+        const resp = await client.getOwnedObjects({
+          owner: walletAddress,
+          cursor,
+          limit: 50,
+          options: { showContent: true, showType: true },
+        });
+
+        console.log(">>> Got objects:", resp.data.length);
+
+        for (const obj of resp.data) {
+          const data = obj.data;
+          if (!data) continue;
+          
+          console.log(">>> Checking object type:", data.type);
+          
+          const type_ = (data as { type?: string }).type;
+          
+          console.log(">>> type_:", type_, "includes:", type_?.includes("PlayerProfile"));
+          
+          if (type_ && type_.includes("PlayerProfile")) {
+            console.log(">>> FOUND PLAYER PROFILE OBJECT, parsing...");
+            const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
+            const fields = content?.fields || {};
+            console.log(">>> fields keys:", Object.keys(fields));
+            const parsed = parsePlayerProfile(fields);
+            console.log(">>> parsed result:", parsed);
+            if (parsed) {
+              parsed.objectId = data.objectId;
+              foundProfile = parsed;
+              console.log(">>> SET FOUND PROFILE:", foundProfile);
+              break;
+            }
+          }
+        }
+
+        cursor = resp.nextCursor ?? undefined;
+        if (foundProfile || !resp.hasNextPage) break;
+      } while (cursor);
+
+      setProfile(foundProfile);
+    } catch (e) {
+      console.error("Error loading profile:", e);
       setError(e instanceof Error ? e.message : "Failed to load profile");
-      setIsLoading(false);
-    });
+    }
+    setIsLoading(false);
   }, [client, walletAddress]);
 
-  return { profile, isLoading, error };
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile, retryCount]);
+
+  const refetch = useCallback(() => {
+    setRetryCount(c => c + 1);
+  }, []);
+
+  return { profile, isLoading, error, refetch };
 }
 
 export function useCreateProfile() {
@@ -820,16 +998,20 @@ export function useCreateProfile() {
       setError(null);
       try {
         const tx = new Transaction();
+        tx.setGasBudget(50000000);
         tx.moveCall({
           target: `${MODULES.player}::create_profile`,
           arguments: [tx.pure.string(username)],
         });
+        console.log(">>> Creating profile for:", username);
         const result = await signAndExecute({ transaction: tx });
+        console.log(">>> Profile result:", result);
         const digest = result.digest;
         setTxHash(digest);
         addToast("Create Profile", `Player "${username}" profile created`, digest);
         setTimeout(() => confirmToast(digest), 3000);
       } catch (e: unknown) {
+        console.error(">>> Profile error:", e);
         setError(e instanceof Error ? e.message : "Failed to create profile");
       }
     },
@@ -996,3 +1178,112 @@ export { BADGE_DEFINITIONS, RANK_NAMES };
 
 
 export { STAT, OP };
+
+// ─── Real-time hooks ───────────────────────────────────────────────────────────
+
+export function useLiveMarketOdds(marketObjectId: string | null): {
+  yesOdds: number; noOdds: number; totalVolume: number; isLoading: boolean;
+} {
+  const client = useSuiClient();
+  const [yesOdds, setYesOdds] = useState(180);
+  const [noOdds, setNoOdds] = useState(180);
+  const [totalVolume, setTotalVolume] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const loadOdds = useCallback(async () => {
+    if (!marketObjectId) return;
+    setIsLoading(true);
+    
+    try {
+      const resp = await client.getObject({
+        id: marketObjectId,
+        options: { showContent: true },
+      });
+      
+      const data = resp.data;
+      if (!data || (data as { dataType?: string }).dataType !== "moveObject") {
+        setIsLoading(false);
+        return;
+      }
+      
+      const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
+      const f = content?.fields || {};
+      
+      const yesPool = BigInt(Number(f.yes_pool || 1));
+      const noPool = BigInt(Number(f.no_pool || 1));
+      const total = yesPool + noPool;
+      
+      if (total > 0n) {
+        const yesOddsVal = Number((yesPool * 20000n) / total) / 100;
+        const noOddsVal = Number((noPool * 20000n) / total) / 100;
+        setYesOdds(Math.max(100, Math.min(500, yesOddsVal)));
+        setNoOdds(Math.max(100, Math.min(500, noOddsVal)));
+        setTotalVolume(Number(total));
+      }
+    } catch (e) {
+      console.error("Error loading odds:", e);
+    }
+    setIsLoading(false);
+  }, [client, marketObjectId]);
+
+  useEffect(() => {
+    if (!marketObjectId) return;
+    
+    loadOdds();
+    
+    intervalRef.current = setInterval(loadOdds, 3000);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [marketObjectId, loadOdds]);
+
+  return { yesOdds, noOdds, totalVolume, isLoading };
+}
+
+export function useLiveBets(marketObjectId: string | null): {
+  bets: BetPosition[]; isLoading: boolean; refetch: () => void;
+} {
+  const [bets, setBets] = useState<BetPosition[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const channelRef = useRef<ReturnType<typeof subscribeToBets> | null>(null);
+
+  const loadBets = useCallback(async () => {
+    if (!marketObjectId) return;
+    setIsLoading(true);
+    
+    try {
+      const marketBets = await getBetsByMarket(marketObjectId);
+      setBets(marketBets);
+    } catch (e) {
+      console.error("Error loading bets:", e);
+    }
+    setIsLoading(false);
+  }, [marketObjectId]);
+
+  useEffect(() => {
+    if (!marketObjectId) return;
+    
+    loadBets();
+
+    if (supabase && !channelRef.current) {
+      channelRef.current = subscribeToBets(marketObjectId, (payload) => {
+        console.log(">>> Realtime bet update:", payload);
+        loadBets();
+      });
+    }
+
+    return () => {
+      if (channelRef.current) {
+        supabase?.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [marketObjectId, loadBets]);
+
+  return { bets, isLoading, refetch: loadBets };
+}

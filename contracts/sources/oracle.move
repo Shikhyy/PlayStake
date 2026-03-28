@@ -110,9 +110,9 @@ module playstake::oracle {
     }
 
     /// Finalize a market — only the oracle can call this (requires OracleCap)
-    public entry fun finalize_market(
+    public entry fun finalize_market<T>(
         _cap: &OracleCap,
-        market_obj: &mut Market,
+        market_obj: &mut Market<T>,
     ) {
         market::finalize(market_obj);
     }

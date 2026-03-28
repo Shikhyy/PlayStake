@@ -2,7 +2,7 @@
 #[test_only]
 module playstake::market_tests {
     use sui::test_scenario as ts;
-    use playstake::market::{Self, Market};
+    use playstake::market::Self;
     use playstake::oracle::{Self, OracleCap};
 
     const PLAYER: address = @0xA;
@@ -15,7 +15,7 @@ module playstake::market_tests {
         let mut scenario = ts::begin(PLAYER);
         ts::next_tx(&mut scenario, PLAYER);
         {
-            market::create_market(MATCH_ID, DEADLINE, ts::ctx(&mut scenario));
+            market::create_market<sui::sui::SUI>(MATCH_ID, DEADLINE, ts::ctx(&mut scenario));
         };
         ts::end(scenario);
     }

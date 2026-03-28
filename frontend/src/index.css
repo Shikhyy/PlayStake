@@ -18,8 +18,9 @@
   /* Text */
   --text-bright: #FFFFFF;
   --text-normal: #E4E4E7;
-  --text-dim: #A1A1AA;
-  --text-faint: #52525B;
+  --text-dim: #C4C4C8;
+  --text-faint: #8A8A8F;
+  --text-void: #000000;
   
   /* Accents */
   --accent-primary: #CEFF00;
@@ -693,6 +694,10 @@ button:focus:not(:focus-visible) {
 
 .input-game::placeholder {
   color: var(--text-faint);
+}
+
+.text-void {
+  color: var(--text-void);
 }
 
 .input-game:focus {

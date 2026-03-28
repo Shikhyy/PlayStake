@@ -11,12 +11,240 @@
 ---
 
 ## ⚡ MISSION_LOG
-PlayStake is a decentralized, non-custodial prediction layer where players stake USDO on their own in-game performance. By bridging high-fidelity gaming data with Move-based smart contracts, PlayStake ensures that every position is settled deterministically via the **OnePlay Oracle**.
+PlayStake is a decentralized, non-custodial prediction layer where players stake **OCT** on their own in-game performance. By bridging high-fidelity gaming data with Move-based smart contracts on OneChain, PlayStake ensures that every position is settled deterministically via the **OnePlay Oracle**.
 
 ### // THE_PROBLEM
 Current prediction markets rely on subjective outcomes or centralized bookmakers who extract high fees (10%+).
 ### // THE_SOLUTION
-PlayStake utilizes raw telemetry and immutable blockchain logic. Zero house edge. Zero admin keys. **2% Protocol Fee** only on winning settlements.
+PlayStake utilizes raw telemetry and immutable blockchain logic on OneChain. Zero house edge. Zero admin keys. **2% Protocol Fee** only on winning settlements.
+
+---
+
+## 🏗️ ARCHITECTURE_OVERVIEW
+
+### System Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              PLAYSTAKE ARCHITECTURE                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+    │    PLAYER    │     │  SPECTATOR   │     │    ORACLE   │
+    │  (Bettor)    │     │  (Backer)    │     │  (Result)   │
+    └──────┬───────┘     └──────┬───────┘     └──────┬───────┘
+           │                    │                    │
+           │  1. Create Claim   │                    │
+           │◄───────────────────│                    │
+           │                    │                    │
+           │  2. Place Stake   │  3. Back Player   │
+           │───────────────────►│◄───────────────────│
+           │                    │                    │
+           ▼                    ▼                    ▼
+    ┌─────────────────────────────────────────────────────────────┐
+    │                      FRONTEND (React 19)                    │
+    │  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌──────────────┐   │
+    │  │  Home   │  │ Markets │  │  Live    │  │  Portfolio   │   │
+    │  └────┬────┘  └────┬────┘  └────┬─────┘  └──────┬───────┘   │
+    │       └────────────┴────────────┴───────────────┘           │
+    │                           │                                  │
+    │                    ┌──────┴──────┐                          │
+    │                    │ useMarket   │                          │
+    │                    │   Hook      │                          │
+    │                    └──────┬──────┘                          │
+    └───────────────────────────┼─────────────────────────────────┘
+                                │
+                                │ Transaction
+                                ▼
+    ┌───────────────────────────────────────────────────────────────┐
+    │                    ONECHAIN (Move VM)                        │
+    │                                                               │
+    │  ┌─────────────────────────────────────────────────────────┐ │
+    │  │                    CONTRACTS                             │ │
+    │  │                                                          │ │
+    │  │  ┌─────────────┐    ┌─────────────┐    ┌────────────┐  │ │
+    │  │  │   market    │    │   oracle    │    │   settle   │  │ │
+    │  │  │  .move      │    │   .move     │    │   .move    │  │ │
+    │  │  │             │    │             │    │            │  │ │
+    │  │  │• create    │    │• post_result│    │• settle    │  │ │
+    │  │  │• place_bet │    │• finalize   │    │  _bet      │  │ │
+    │  │  │• get_odds  │    │• eval_claim│    │            │  │ │
+    │  │  └──────┬──────┘    └──────┬─────┘    └─────┬──────┘  │ │
+    │  │         │                   │                │         │ │
+    │  │         └───────────────────┼────────────────┘         │ │
+    │  │                             │                          │ │
+    │  │                    ┌────────┴────────┐                │ │
+    │  │                    │  Shared Objects  │                │ │
+    │  │                    │  • Market       │                │ │
+    │  │                    │  • MatchResult  │                │ │
+    │  │                    │  • PlayerStats  │                │ │
+    │  │                    └─────────────────┘                │ │
+    │  └─────────────────────────────────────────────────────────┘ │
+    │                                                               │
+    └───────────────────────────────────────────────────────────────┘
+                                │
+                                │ WebSocket
+                                ▼
+    ┌───────────────────────────────────────────────────────────────┐
+    │                    ORACLE RELAY (Node.js)                    │
+    │                                                               │
+    │  ┌─────────────┐    ┌─────────────┐    ┌──────────────────┐  │
+    │  │   Game      │    │  WebSocket  │    │   Event         │  │
+    │  │   Servers   │───►│   Server    │───►│   Emitter       │  │
+    │  └─────────────┘    └─────────────┘    └──────────────────┘  │
+    │                                                               │
+    │  Listens for: POST /game/{gameId}                            │
+    │  Emits: match_completed events                               │
+    └───────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔄 WORKFLOW
+
+### Complete Betting Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          BETTING WORKFLOW                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+  │ STEP 1  │     │ STEP 2  │     │ STEP 3  │     │ STEP 4  │
+  │ Create  │     │ Place   │     │ Match   │     │ Settle  │
+  │ Market  │────►│ Bet     │────►│ Results │────►│ Payout  │
+  └─────────┘     └─────────┘     └─────────┘     └─────────┘
+       │               │               │               │
+       ▼               ▼               ▼               ▼
+  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+  │ Anyone  │     │ Player  │     │ Oracle  │     │ Anyone  │
+  │ can    │     │ stakes  │     │ posts   │     │ triggers│
+  │ create │     │ on their│     │ verified│     │ settle  │
+  │ market │     │ claim   │     │ stats   │     │ & wins  │
+  └─────────┘     └─────────┘     └─────────┘     └─────────┘
+```
+
+### Step-by-Step Details
+
+#### 1. CREATE MARKET
+```move
+// Anyone can create a prediction market
+market::create_market(match_id, deadline_ms, ctx)
+
+// Emits: MarketCreated { market_id, match_id, deadline_ms }
+```
+
+#### 2. PLACE BET
+```move
+// Player or spectator places a bet
+market::place_bet(
+  market,           // Shared market object
+  subject,          // Player being bet on
+  game,             // Game identifier
+  stat,             // STAT_DAMAGE | STAT_KILLS | STAT_PLACEMENT
+  operator,         // OP_GTE | OP_LTE
+  threshold,        // Target value (e.g., 8000 damage)
+  payment,          // SUI coin stake
+  is_yes,           // TRUE = YES bet, FALSE = NO bet
+)
+
+// Creates Bet object and updates Market pools
+```
+
+#### 3. POST RESULT (Oracle)
+```move
+// Oracle posts verified match results
+oracle::post_result(oracle_cap, match_id, finalized_at)
+
+// Adds player stats to MatchResult
+oracle::add_player_stats(result, player, damage, kills, placement, gold)
+
+// Finalizes market
+oracle::finalize_market(market, result)
+```
+
+#### 4. SETTLE BET
+```move
+// Permissionless settlement - anyone can trigger
+settle::settle_bet_entry(market, bet, result)
+
+// Evaluates claim against actual stats
+// Distributes payouts from pool (2% fee deducted)
+```
+
+---
+
+## 📦 COMPONENT_DOCUMENTATION
+
+### Smart Contracts (`contracts/sources/`)
+
+| File | Responsibility | Key Functions |
+|------|---------------|---------------|
+| `market.move` | Bet placement, escrow, odds | `create_market`, `place_bet`, `get_odds` |
+| `oracle.move` | Result validation, claim evaluation | `post_result`, `add_player_stats`, `finalize_market` |
+| `settle.move` | Payout distribution | `settle_bet_entry`, `settle_bet_with_profile` |
+| `player.move` | Player profiles, XP, badges | `create_profile`, `update_stats`, `claim_badge` |
+
+### Frontend (`frontend/src/`)
+
+| File | Purpose |
+|------|---------|
+| `hooks/useMarket.ts` | Core blockchain interactions (998 lines) |
+| `constants/index.ts` | Package ID, modules, game configs |
+| `pages/*.tsx` | Route components |
+| `layouts/Layout.tsx` | Shared navigation |
+
+### Oracle Relay (`oracle-relay/`)
+
+- WebSocket server for real-time updates
+- Receives game server callbacks
+- Broadcasts match completion events
+
+### AI Agent SDK (`ai-agent/`)
+
+- TypeScript SDK for autonomous trading
+- Integrates with Coinbase AgentKit
+- Real-time market scanning & betting
+
+---
+
+## 💰 FEE_STRUCTURE
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     FEE BREAKDOWN                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Stake Amount:    100 OCT (9 decimals)                      │
+│                                                             │
+│  ┌─────────────┐                                           │
+│  │  WIN        │  Payout = Stake × Odds                     │
+│  │             │  Fee (2%) = Payout × 0.02                │
+│  │  Net Win    │  = (100 × 1.8) - 3.6                      │
+│  │             │  = 176.4 OCT                              │
+│  └─────────────┘                                           │
+│                                                             │
+│  ┌─────────────┐                                           │
+│  │  LOSE       │  Stake goes to pool                       │
+│  │             │  No fee charged                           │
+│  │  Net Loss   │  = -100 OCT                               │
+│  └─────────────┘                                           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Fee Distribution
+- **2% Protocol Fee** - Only on winning payouts
+- **98%** - Distributed to winning bettors proportional to stake
+
+---
+
+## 🔒 SECURITY_MODEL
+
+1. **No Admin Keys** - All functions are permissionless
+2. **Non-Custodial** - User funds never leave their control
+3. **Deterministic Settlement** - Claims evaluated on-chain via oracle data
+4. **Escrow** - Bets held in market balance until settlement
 
 ---
 
