@@ -6,6 +6,7 @@
   [![OneChain](https://img.shields.io/badge/NETWORK-OneChain_Testnet-CEFF00?style=for-the-badge&logo=sui&logoColor=black)](https://onelabs.cc)
   [![React](https://img.shields.io/badge/FRONTEND-React_19-white?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
   [![Move](https://img.shields.io/badge/CONTRACTS-Move_VM-zinc?style=for-the-badge)](https://sui.io/)
+  [![Deployment](https://img.shields.io/badge/LIVE_APP-playstake.vercel.app-blue?style=for-the-badge&logo=vercel)](https://playstake.vercel.app)
 </div>
 
 ---
