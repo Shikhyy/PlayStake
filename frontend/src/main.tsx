@@ -34,8 +34,7 @@ const queryClient = new QueryClient({
 });
 
 const networks = {
-  testnet: { url: 'http://localhost:4000/rpc' },
-  onelabs: { url: 'https://rpc-testnet.onelabs.cc:443' },
+  testnet: { url: import.meta.env.VITE_RPC_URL || 'https://rpc-testnet.onelabs.cc:443' },
 };
 
 console.log('>>> PlayStake starting with RPC:', networks.testnet.url);

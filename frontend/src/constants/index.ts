@@ -11,7 +11,7 @@ export const MODULES = {
   player: `${PACKAGE_ID}::player`,
 } as const;
 
-export const USDO_TYPE = "0x2::sui::SUI";
+export const USDO_TYPE = "0x2::oct::OCT";
 
 export const TREASURY_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000FEE";

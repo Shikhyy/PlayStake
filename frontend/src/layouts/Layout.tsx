@@ -15,36 +15,35 @@ export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen gradient-bg">
-      {/* Gaming grid background */}
-      <div className="fixed inset-0 grid-pattern opacity-50 pointer-events-none" />
-      <div className="fixed inset-0 scanline-overlay pointer-events-none" />
-      <div className="fixed inset-0 pointer-events-none" 
-           style={{
-              backgroundImage: `radial-gradient(ellipse at 50% 0%, rgba(87, 106, 143, 0.12) 0%, transparent 50%)`
-            }} />
+    <div className="min-h-screen bg-void text-bright font-tech selection:bg-accent-primary selection:text-void">
+      {/* Brutalist grid background */}
+      <div className="fixed inset-0 grid-pattern opacity-60 pointer-events-none" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-[#252a38]">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-panel border-b border-dim backdrop-blur-none">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <NavLink to="/" className="flex items-center py-2 -ml-4">
-              <img src="/leggo.png" alt="PlayStake" className="w-60 h-50 object-contain" />
+            <NavLink to="/" className="flex items-center gap-3">
+              <img src="/logo.svg" alt="PlayStake" className="w-10 h-10" />
+              <span className="text-xl font-bold font-display tracking-tight text-bright uppercase">PlayStake</span>
             </NavLink>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-6">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
-                  className={({ isActive }) => `nav-link flex items-center gap-2 mx-1 font-tech uppercase tracking-wider text-sm ${isActive ? 'active' : ''}`}
+                  className={({ isActive }) => 
+                    `flex items-center gap-2 font-display uppercase font-bold text-sm tracking-widest transition-all
+                     ${isActive ? 'text-accent-primary' : 'text-dim hover:text-bright'}`
+                  }
                 >
                   <link.icon />
                   {link.label}
                   {link.badge && (
-                    <span className="badge-game badge-red text-[9px] px-1.5 py-0.5 ml-1">
+                    <span className="badge-game bg-void text-accent-primary border-accent-primary ml-1 animate-pulse">
                       {link.badge}
                     </span>
                   )}
@@ -55,29 +54,26 @@ export default function Layout() {
             {/* Right side */}
             <div className="flex items-center gap-4">
               {/* Network badge */}
-              <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-lg" 
-                   style={{ background: 'rgba(87, 106, 143, 0.1)', border: '1px solid rgba(87, 106, 143, 0.2)' }}>
-                <span className="w-2 h-2 rounded-full animate-pulse-glow" style={{ background: '#F6B17A' }} />
-                <span className="text-xs font-tech font-medium text-normal">OneChain Testnet</span>
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-dim bg-surface">
+                <span className="w-2 h-2 rounded-none bg-status-success animate-pulse" />
+                <span className="text-xs font-mono font-medium text-dim uppercase">OneChain Testnet</span>
               </div>
 
               {/* Connect Wallet */}
               <div className="flex-shrink-0">
-                <ConnectButton className="!bg-[#F6B17A] !text-[#1a1a2e] !font-bold !px-4 !py-2 !rounded-lg !border-0 hover:!bg-[#e59f6a] hover:!shadow-[0_0_20px_rgba(246,177,122,0.5)] transition-all" />
+                <ConnectButton className="!bg-[#CEFF00] !text-[#000000] !font-display !font-bold !uppercase !tracking-widest !px-6 !py-2.5 !rounded-none !border-none hover:!bg-[#B0DF00] transition-colors" />
               </div>
 
               {/* Mobile menu button */}
               <button
-                className="md:hidden p-2.5 rounded-lg border border-dim hover:border-accent-violet transition-all"
+                className="md:hidden p-2 border border-dim text-dim hover:text-bright hover:border-bright transition-colors bg-surface"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-                aria-expanded={isMobileMenuOpen}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   )}
                 </svg>
               </button>
@@ -87,25 +83,22 @@ export default function Layout() {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden glass-panel border-t border-[#252a38] animate-fade-in-down">
-            <div className="px-4 py-4 space-y-1">
+          <div className="md:hidden bg-panel border-t border-dim">
+            <div className="px-4 py-4 flex flex-col gap-2">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3.5 rounded-lg font-tech uppercase tracking-wider text-sm transition-all ${
-                      isActive
-                        ? "text-accent-lavender bg-[rgba(183,189,247,0.1)]"
-                        : "text-dim hover:text-normal hover:bg-[#181c25]"
-                    }`
+                    `flex items-center gap-3 px-4 py-3 font-display uppercase font-bold tracking-widest border border-transparent
+                     ${isActive ? "text-void bg-accent-primary" : "text-dim hover:text-bright hover:border-dim hover:bg-surface"}`
                   }
                 >
                   <link.icon />
                   {link.label}
                   {link.badge && (
-                    <span className="badge-game badge-red text-[10px]">LIVE</span>
+                    <span className="ml-auto text-[10px] bg-void text-accent-primary px-2 py-1 border border-accent-primary">LIVE</span>
                   )}
                 </NavLink>
               ))}
@@ -115,57 +108,55 @@ export default function Layout() {
       </nav>
 
       {/* Main content */}
-      <main className="pt-24">
+      <main className="pt-20">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#252a38] mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <footer className="border-t border-dim mt-auto bg-panel">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             {/* Brand */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" 
-                     style={{ background: 'linear-gradient(135deg, #2D3250 0%, #25343F 100%)' }}>
-                  <Icons.zap size={24} className="text-accent-gold" />
+                <div className="w-8 h-8 bg-bright flex items-center justify-center">
+                  <Icons.zap size={16} className="text-void" />
                 </div>
-                <span className="text-xl font-bold font-display gradient-text-gaming">PlayStake</span>
+                <span className="text-xl font-bold font-display uppercase tracking-widest">PlayStake</span>
               </div>
-              <p className="text-dim text-sm leading-relaxed max-w-md font-tech">
-                Skill-based prediction markets for GameFi. Stake on in-game performance, 
-                verified by OnePlay oracle. No house edge, instant settlements.
+              <p className="text-dim text-sm font-mono max-w-sm">
+                Prediction markets for GameFi. Zero house edge. Total on-chain transparency.
               </p>
             </div>
 
             {/* Links */}
             <div>
-              <h4 className="font-semibold mb-5 text-sm uppercase tracking-widest text-dim font-tech">Platform</h4>
-              <ul className="space-y-3 text-sm font-tech">
-                <li><NavLink to="/markets" className="text-normal hover:text-accent-lavender transition-colors">Markets</NavLink></li>
-                <li><NavLink to="/live" className="text-normal hover:text-accent-lavender transition-colors">Live Matches</NavLink></li>
-                <li><NavLink to="/portfolio" className="text-normal hover:text-accent-lavender transition-colors">Portfolio</NavLink></li>
+              <h4 className="font-bold mb-4 text-sm uppercase tracking-widest text-bright font-display">Platform</h4>
+              <ul className="space-y-3 text-sm font-mono text-dim">
+                <li><NavLink to="/markets" className="hover:text-accent-primary transition-colors">/markets</NavLink></li>
+                <li><NavLink to="/live" className="hover:text-accent-primary transition-colors">/live_matches</NavLink></li>
+                <li><NavLink to="/portfolio" className="hover:text-accent-primary transition-colors">/portfolio</NavLink></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-5 text-sm uppercase tracking-widest text-dim font-tech">Resources</h4>
-              <ul className="space-y-3 text-sm font-tech">
-                <li><NavLink to="/about" className="text-normal hover:text-accent-lavender transition-colors">About</NavLink></li>
-                <li><a href="#" className="text-normal hover:text-accent-lavender transition-colors">Documentation</a></li>
-                <li><a href="#" className="text-normal hover:text-accent-lavender transition-colors">GitHub</a></li>
+              <h4 className="font-bold mb-4 text-sm uppercase tracking-widest text-bright font-display">System</h4>
+              <ul className="space-y-3 text-sm font-mono text-dim">
+                <li><NavLink to="/about" className="hover:text-accent-primary transition-colors">/protocol_docs</NavLink></li>
+                <li><a href="#" className="hover:text-accent-primary transition-colors">/github_repo</a></li>
+                <li><a href="#" className="hover:text-accent-primary transition-colors">/oracle_status</a></li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-[#252a38] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-faint font-tech">
-              Built on OneChain for OneHack 3.0
+          <div className="mt-12 pt-6 border-t border-dim flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-faint font-mono uppercase">
+              SYS.BUILD // ONECHAIN TESTNET // V1.0.0
             </p>
             <div className="flex items-center gap-4">
-              <span className="badge-game badge-blue">
-                <span className="w-1.5 h-1.5 bg-accent-lavender rounded-full animate-pulse-glow" />
-                Testnet Active
+              <span className="font-mono text-[10px] text-status-success uppercase flex items-center gap-2 border border-status-success px-2 py-1">
+                <span className="w-2 h-2 bg-status-success" />
+                Network Online
               </span>
             </div>
           </div>
@@ -175,11 +166,11 @@ export default function Layout() {
   );
 }
 
-// Icons
+// Icons (Brutalist stark lines SVG)
 function HomeIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M3 10h3v11h12V10h3L12 3 3 10z" />
     </svg>
   );
 }
@@ -187,7 +178,7 @@ function HomeIcon() {
 function MarketsIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M3 3h18v18H3V3z M3 9h18 M9 21V9" />
     </svg>
   );
 }
@@ -195,7 +186,8 @@ function MarketsIcon() {
 function LiveIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
+      <circle cx="12" cy="12" r="3" strokeWidth="1.5" />
+      <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M19.07 4.93a10 10 0 010 14.14M4.93 19.07a10 10 0 010-14.14M15.54 8.46a5 5 0 010 7.07M8.46 15.54a5 5 0 010-7.07" />
     </svg>
   );
 }
@@ -203,7 +195,7 @@ function LiveIcon() {
 function PortfolioIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M4 4h16v16H4V4z M4 8h16 M8 20V8" />
     </svg>
   );
 }
@@ -211,7 +203,7 @@ function PortfolioIcon() {
 function AboutIcon() {
   return (
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M12 11v6 M12 7h.01 M3 3h18v18H3V3z" />
     </svg>
   );
 }

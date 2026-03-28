@@ -1,100 +1,89 @@
 <div align="center">
-  <img src="frontend/public/leggo.png" alt="PlayStake Logo" width="300"/>
-  <h1>PlayStake</h1>
-  <p><b>Skill-based prediction markets for GameFi on OneChain.</b></p>
+  <img src="frontend/public/logo.svg" alt="PlayStake Logo" width="200"/>
+  <h1>PLAYSTAKE // BRUTALIST_PREDICTION_ENGINE</h1>
+  <p><b>A deterministic, skill-based prediction market for GameFi on OneChain (Move VM).</b></p>
 
-  [![OneChain](https://img.shields.io/badge/Blockchain-OneChain-blue?style=for-the-badge&logo=sui)](https://onelabs.cc)
-  [![React](https://img.shields.io/badge/Frontend-React_19-cyan?style=for-the-badge&logo=react)](https://react.dev/)
-  [![Move](https://img.shields.io/badge/Smart_Contracts-Move-purple?style=for-the-badge)](https://sui.io/)
+  [![OneChain](https://img.shields.io/badge/NETWORK-OneChain_Testnet-CEFF00?style=for-the-badge&logo=sui&logoColor=black)](https://onelabs.cc)
+  [![React](https://img.shields.io/badge/FRONTEND-React_19-white?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+  [![Move](https://img.shields.io/badge/CONTRACTS-Move_VM-zinc?style=for-the-badge)](https://sui.io/)
 </div>
 
 ---
 
-## 🎮 What is PlayStake?
-PlayStake is a fully decentralized, non-custodial prediction market where players stake on their own in-game performance before a match. Spectators can also back top players. 
+## ⚡ MISSION_LOG
+PlayStake is a decentralized, non-custodial prediction layer where players stake USDO on their own in-game performance. By bridging high-fidelity gaming data with Move-based smart contracts, PlayStake ensures that every position is settled deterministically via the **OnePlay Oracle**.
 
-After a match finishes, the **OnePlay Oracle** posts verified game statistics on-chain, and the smart contracts automatically settle all bets. Zero admin keys, zero house edge.
-
----
-
-## ⚡ Features
-- **Real-time On-Chain Settlement**: Market resolutions trigger immediate native SUI payouts.
-- **Player Profiles**: Mint an on-chain NFT profile to track XP, win-rate, and rank progression.
-- **Live Leaderboards**: View real-time verified match statistics securely pulled from the OneChain network.
-- **Autonomous AI Liquidity**: A built-in Node bot that automatically seeds markets with initial liquidity based on predictive modeling.
+### // THE_PROBLEM
+Current prediction markets rely on subjective outcomes or centralized bookmakers who extract high fees (10%+).
+### // THE_SOLUTION
+PlayStake utilizes raw telemetry and immutable blockchain logic. Zero house edge. Zero admin keys. **2% Protocol Fee** only on winning settlements.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ TECHNICAL_ARCHITECTURE
 
-| Component | Tech Stack | Description |
+| MODULE | STACK | FUNCTION |
 | :--- | :--- | :--- |
-| **Smart Contracts** | Move (Sui-compatible) | Handles escrow (SUI Coin balances), bet placement, oracle verification, and secure payouts. |
-| **Frontend UI** | React 19, Vite, Tailwind | Premium gaming dashboard with glassmorphism, dynamic progress bars, and animations. |
-| **Oracle Relay** | Node.js, WebSockets | Listens to live game servers (PUBG, Valorant) and submits finalized stats to the blockchain. |
-| **AI Agent** | Node.js, TypeScript | Automatically creates markets and places predictive bets every 5 minutes to maintain liquidity. |
+| **CORE_CONTRACTS** | Move (Sui-compatible) | Escrow, Claim Validation, Payouts. |
+| **BRUTALIST_UI** | React 19 + Tailwind | High-density data terminal & match HUD. |
+| **ORACLE_RELAY** | Node.js + WebSockets | Verified server-to-chain data transmission. |
+| **AI_LIQUIDITY** | Node.js + TypeSctipt | Autonomous market seeding & sentiment analysis. |
 
 ---
 
-## 🚀 Quick Start
+## 🖼️ VISUAL_TELEMETRY
 
-### 1. Prerequisites
-- [Node.js](https://nodejs.org/) v18+
-- [Sui CLI](https://docs.sui.io/guides/developer/getting-started/sui-install) (configured for OneChain Testnet)
+````carousel
+![Home Terminal](https://raw.githubusercontent.com/Shikhyy/PlayStake/main/.gemini/antigravity/brain/eecf98d1-6fb9-41e0-ad59-b1f19517221e/home_page_1774631695760.png)
+<!-- slide -->
+![Liquidity Desks](https://raw.githubusercontent.com/Shikhyy/PlayStake/main/.gemini/antigravity/brain/eecf98d1-6fb9-41e0-ad59-b1f19517221e/markets_page_1774631717680.png)
+<!-- slide -->
+![Match Feed](https://raw.githubusercontent.com/Shikhyy/PlayStake/main/.gemini/antigravity/brain/eecf98d1-6fb9-41e0-ad59-b1f19517221e/live_page_1774631733199.png)
+````
 
-### 2. Smart Contracts Deploy
-```bash
-# Navigate to contracts directory
-cd contracts
-
-# Build and deploy Move packages
-sui move build
-sui client publish --gas-budget 100000000
-```
-*Note: After deployment, copy the `PACKAGE_ID` and `ORACLE_CAP_ID` into your `.env` files.*
-
-### 3. Run the Infrastructure
-Start the frontend and the oracle relay agent locally.
-
-**Terminal 1 (AI Agent & Oracle Relay):**
-```bash
-cd oracle-relay
-npm install
-npm run dev
-```
-
-**Terminal 2 (Frontend React App):**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Visit http://localhost:5173 to access the DApp.
+*(Note: Real-time screenshots from current deployment)*
 
 ---
 
-## 🧪 Testing
+## 🚀 DEPLOYMENT_GUIDE
 
-The contracts include an extensive suite of pure unit tests. E2E tests verify the complete flow using real RPC nodes and native coin splitting.
+### 1. ENVIRONMENT_SYNC
+Sync your `.env` files with the following testnet parameters:
+```bash
+PACKAGE_ID=0xa8111bccb58757c9ef3d880e0667b53576648e6f5b3f9286a817e39cb34e3cc9
+ORACLE_CAP_ID=0x797af785ba04d3de243eb2e8e9d80a5f6c3eb71f19360b3c0fdedba11b105de4
+```
+
+### 2. CORE_START
+```bash
+# Terminal 1: Oracle & Analytics Relay
+cd oracle-relay && npm run dev
+
+# Terminal 2: Visual Interface
+cd frontend && npm run dev
+```
+
+---
+
+## 🧪 FINALITY_VERIFICATION
+
+Our test suite ensures 100% coverage of the settlement logic.
 
 ```bash
-# Run Move Unit Tests
+# Move Unit Tests
 cd contracts && sui move test
 
-# Run End-To-End (E2E) Test Suite
+# Full Stack E2E Cycle
 npx tsx e2e/full_flow_test.ts
 ```
 
 ---
 
-## 🎨 UI/UX Design System
-PlayStake uses a custom design system tailored for modern gaming aesthetics.
-- **Colors**: Deep Voids (`#050508`), Accent Lavender (`#B7BDF7`), Neon Gold (`#F6B17A`).
-- **Typography**: `Orbitron` (Display), `Rajdhani` (Tech stats), `JetBrains Mono` (Data points).
-- **Animations**: Subtle float mechanics, mouse-reactive gradients, and pulse-glow indicators for live data segments.
-
----
+## 🎨 DESIGN_PHILOSOPHY [BRUTALIST]
+- **Palette**: Zinc / Void / Electric Lime (`#CEFF00`).
+- **Type**: `Space Grotesk` (Display) & `Inter` (Mono/Body).
+- **UX**: Zero blur, zero glassmorphism. High contrast, low latency.
 
 <div align="center">
-  <i>Built for the OneHack 3.0 Hackathon on OneChain.</i>
+  <i>BUILT FOR ONEHACK 3.0 // POWERED BY ONECHAIN</i>
 </div>

@@ -8,6 +8,7 @@ import {
   type BetOnChain,
   type PerformanceClaim,
 } from "../hooks/useMarket";
+import { toUsdo } from "../constants";
 import { Icons, getIcon } from "../components/Icons";
 import { SUPPORTED_GAMES } from "../constants/games";
 
@@ -57,7 +58,7 @@ function useMarketBets(betIds: string[]): {
             threshold: Number(claimF.threshold || 0),
           } as PerformanceClaim,
           stakeRaw,
-          stakeUsdo: Number(stakeRaw) / 1e6,
+          stakeUsdo: toUsdo(stakeRaw),
           odds: Number(f.odds || 0) / 100,
           settled: Boolean(f.settled),
         });
@@ -315,7 +316,7 @@ export default function MarketDetail() {
                     </div>
 
                     <div>
-                      <label className="text-sm text-dim font-tech mb-2 block">Stake (SUI)</label>
+                      <label className="text-sm text-dim font-tech mb-2 block">Stake (OCT)</label>
                       <input type="number" value={stake} onChange={e => setStake(Number(e.target.value))}
                         className="input-game w-full" min={1} step={0.1} />
                     </div>

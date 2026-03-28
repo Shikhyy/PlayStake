@@ -45,35 +45,36 @@ function PlaceBetModal({ marketId, matchId, onClose }: PlaceBetModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="card-game gradient-border-glow w-full max-w-md p-6" style={{ maxHeight: '90vh', overflow: 'auto' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Place Bet</h2>
-          <button onClick={onClose} className="text-2xl">&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/90 backdrop-blur-sm">
+      <div className="bg-panel border border-accent-primary w-full max-w-md p-0 shadow-[8px_8px_0_var(--accent-primary)]" style={{ maxHeight: '90vh', overflow: 'auto' }}>
+        <div className="flex items-center justify-between p-4 border-b border-dim bg-surface">
+          <h2 className="text-xl font-display font-bold uppercase tracking-widest text-bright">Execute Trade</h2>
+          <button onClick={onClose} className="text-dim hover:text-bright font-mono text-xl">✕</button>
         </div>
 
-        <div className="space-y-4">
-          <div className="p-3 rounded bg-[#181c25]">
-            <div className="text-sm text-gray-400">Match #{matchId}</div>
+        <div className="p-6 space-y-5">
+          <div className="flex justify-between items-center p-3 bg-void border border-dim font-mono text-sm">
+            <span className="text-dim">TARGET OPERATION</span>
+            <span className="text-accent-primary font-bold">MATCH #{matchId}</span>
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Subject Address</label>
+            <label className="text-xs font-mono text-dim uppercase block mb-2">Subject Public Key</label>
             <input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="0x..."
-              className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
+              className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="text-sm text-dim font-tech block mb-1">Game</label>
+            <label className="text-xs font-mono text-dim uppercase block mb-2">Simulation Env</label>
             <select
               value={game}
               onChange={(e) => setGame(e.target.value)}
-              className="input-game w-full"
+              className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none appearance-none"
             >
               {SUPPORTED_GAMES.map(g => (
                 <option key={g.name} value={g.name}>{g.name}</option>
@@ -81,93 +82,94 @@ function PlaceBetModal({ marketId, matchId, onClose }: PlaceBetModalProps) {
             </select>
           </div>
 
-          <div>
-            <label className="text-sm text-gray-400 block mb-1">Stat</label>
-            <select
-              value={stat}
-              onChange={(e) => setStat(e.target.value as any)}
-              className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
-            >
-              <option value="DAMAGE">Damage Dealt</option>
-              <option value="KILLS">Kills</option>
-              <option value="PLACEMENT">Placement</option>
-              <option value="GOLD">Gold Earned</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-mono text-dim uppercase block mb-2">Telemetry</label>
+              <select
+                value={stat}
+                onChange={(e) => setStat(e.target.value as any)}
+                className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none appearance-none"
+              >
+                <option value="DAMAGE">DMG_DEALT</option>
+                <option value="KILLS">ELIMS</option>
+                <option value="PLACEMENT">LOBBY_RANK</option>
+                <option value="GOLD">ECONOMY</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-mono text-dim uppercase block mb-2">Logic</label>
+              <select
+                value={operator}
+                onChange={(e) => setOperator(e.target.value as "GTE" | "LTE" | "EQ")}
+                className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none appearance-none"
+              >
+                <option value="GTE">&gt;= GTE</option>
+                <option value="LTE">&lt;= LTE</option>
+                <option value="EQ">== EQ</option>
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Operator</label>
-            <select
-              value={operator}
-              onChange={(e) => setOperator(e.target.value as "GTE" | "LTE" | "EQ")}
-              className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
-            >
-              <option value="GTE">≥ Greater or Equal</option>
-              <option value="LTE">≤ Less or Equal</option>
-              <option value="EQ">= Exactly</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-400 block mb-1">Target Value</label>
+            <label className="text-xs font-mono text-dim uppercase block mb-2">Threshold Value</label>
             <input
               type="number"
               value={threshold}
               onChange={(e) => setThreshold(Number(e.target.value))}
-              className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
+              className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none"
               min={1}
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Bet</label>
-            <div className="flex gap-2">
+            <label className="text-xs font-mono text-dim uppercase block mb-2">Direction</label>
+            <div className="flex gap-0 border border-dim bg-void p-1">
               <button
                 type="button"
                 onClick={() => setBetSide("YES")}
-                className={`flex-1 py-2 rounded font-bold ${betSide === "YES" ? "bg-green-600 text-white" : "bg-[#181c25] text-gray-400 border border-[#252a38]"}`}
+                className={`flex-1 py-2 font-display font-bold tracking-widest uppercase transition-colors ${betSide === "YES" ? "bg-status-success text-void" : "text-dim hover:bg-surface"}`}
               >
-                YES
+                Buy Yes
               </button>
               <button
                 type="button"
                 onClick={() => setBetSide("NO")}
-                className={`flex-1 py-2 rounded font-bold ${betSide === "NO" ? "bg-red-600 text-white" : "bg-[#181c25] text-gray-400 border border-[#252a38]"}`}
+                className={`flex-1 py-2 font-display font-bold tracking-widest uppercase transition-colors ${betSide === "NO" ? "bg-status-error text-void" : "text-dim hover:bg-surface"}`}
               >
-                NO
+                Buy No
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Stake (USDO)</label>
+            <label className="text-xs font-mono text-dim uppercase block mb-2">Margin (USDO)</label>
             <input
               type="number"
               value={stake}
               onChange={(e) => setStake(Number(e.target.value))}
-              className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
+              className="w-full p-3 lg:text-xl font-bold bg-void border border-dim text-accent-primary font-mono focus:border-accent-primary focus:outline-none"
               min={1}
             />
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-red-900/30 text-red-400 text-sm">
-              {error}
+            <div className="p-3 bg-void border border-status-error text-status-error text-xs font-mono uppercase">
+              ERR: {error}
             </div>
           )}
 
           {txHash && (
-            <div className="p-3 rounded bg-green-900/30 text-green-400 text-sm">
-              Bet placed! TX: {txHash.slice(0, 20)}...
+            <div className="p-3 bg-void border border-status-success text-status-success text-xs font-mono uppercase">
+              TX CONFIRMED: {txHash.slice(0, 20)}...
             </div>
           )}
 
           <button
             onClick={handlePlaceBet}
             disabled={isLoading || !account}
-            className="w-full py-3 rounded font-bold bg-[#F6B17A] text-black hover:bg-[#e59f6a] disabled:opacity-50"
+            className="w-full py-4 mt-2 font-display font-bold tracking-widest uppercase border border-accent-primary bg-accent-primary text-void hover:bg-[#B0DF00] hover:shadow-[4px_4px_0_#FFF] transition-all disabled:opacity-50 disabled:hover:shadow-none"
           >
-            {isLoading ? "Confirming..." : `Place Bet — ${stake} USDO`}
+            {isLoading ? "Broadcasting..." : `Commit ${stake} USDO`}
           </button>
         </div>
       </div>
@@ -193,37 +195,44 @@ function MarketCard({
   const yesPct = totalPool > 0 ? Math.round((market.yesPool / totalPool) * 100) : 50;
   const now = Date.now();
   const timeLeft = market.deadlineMs > now
-    ? `${Math.max(0, Math.floor((market.deadlineMs - now) / 60000))}m`
-    : "Closed";
+    ? `${Math.max(0, Math.floor((market.deadlineMs - now) / 60000))}M`
+    : "CLOSED";
 
   return (
-    <div className="p-4 rounded-lg border border-[#252a38] bg-[#11131a]">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h3 className="font-semibold">Match #{market.matchId}</h3>
-          <p className="text-xs text-gray-500 font-mono">{market.objectId.slice(0, 8)}...</p>
-        </div>
-        <span className={`px-2 py-1 rounded text-xs ${market.finalized ? "bg-green-900 text-green-400" : "bg-red-900 text-red-400"}`}>
+    <div className="border border-dim bg-panel group hover:border-accent-primary transition-colors flex flex-col justify-between h-full">
+      <div className="flex justify-between items-center p-4 border-b border-dim bg-surface">
+        <div className="font-mono text-[10px] text-dim uppercase">ID: {market.objectId.slice(0, 8)}...</div>
+        <div className={`font-mono text-[10px] px-2 py-1 uppercase font-bold border ${market.finalized ? "bg-surface border-dim text-dim" : "bg-accent-primary border-accent-primary text-void group-hover:bg-bright group-hover:border-bright transition-colors"}`}>
           {market.finalized ? "Settled" : timeLeft}
-        </span>
-      </div>
-
-      <div className="mb-3 p-3 rounded bg-[#181c25]">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-400">Total Pool</span>
-          <span className="font-mono font-bold">{totalPool.toFixed(2)} USDO</span>
         </div>
       </div>
 
-      <div className="flex justify-between text-sm text-gray-400 mb-3">
-        <span>YES: {market.yesPool.toFixed(0)}</span>
-        <span>Bets: {market.betCount}</span>
-        <span>YES: {yesPct}%</span>
+      <div className="p-5 flex-grow">
+        <h3 className="font-display font-bold text-2xl uppercase tracking-tight text-bright mb-4">Match #{market.matchId}</h3>
+        
+        <div className="space-y-4">
+          <div className="flex justify-between items-center font-mono">
+            <span className="text-dim text-xs">Total Margin</span>
+            <span className="text-bright text-lg font-bold">{totalPool.toFixed(2)} USDO</span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between font-mono text-[10px] uppercase">
+              <span className="text-status-success">YES / {yesPct}%</span>
+              <span className="text-status-error">NO / {100 - yesPct}%</span>
+            </div>
+            <div className="flex h-2 bg-void">
+              <div className="bg-status-success h-full" style={{ width: `${yesPct}%` }} />
+              <div className="bg-status-error h-full" style={{ width: `${100 - yesPct}%` }} />
+            </div>
+            <div className="text-right font-mono text-[10px] text-dim mt-1">VOL: {market.betCount} POSITIONS</div>
+          </div>
+        </div>
       </div>
 
       {!market.finalized && (
-        <button onClick={onPlaceBet} className="w-full py-2 rounded bg-[#2D3250] hover:bg-[#424769]">
-          Place Bet
+        <button onClick={onPlaceBet} className="w-full py-3 font-display font-bold uppercase tracking-widest bg-void text-bright border-t border-dim group-hover:bg-accent-primary group-hover:text-void group-hover:border-accent-primary transition-colors">
+          Initialize Position
         </button>
       )}
     </div>
@@ -235,8 +244,6 @@ export default function Markets() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const account = useCurrentAccount();
-  console.log(">>> Markets render, account:", account?.address);
-  
   const { markets, isLoading: marketsLoading, error: marketsError } = useAllMarkets();
   const { createMarket, isLoading: isCreating, txHash: createTxHash, error: createError } = useCreateMarket();
   
@@ -244,7 +251,6 @@ export default function Markets() {
   const [newDeadline, setNewDeadline] = useState(3600000);
 
   const handleCreateMarket = () => {
-    console.log(">>> handleCreateMarket called, account:", account?.address);
     if (!account) {
       alert("Please connect your wallet first!");
       return;
@@ -253,116 +259,114 @@ export default function Markets() {
   };
 
   const filteredMarkets = markets;
-
-  const selectedMarket = activeBetModal
-    ? markets.find(m => m.objectId === activeBetModal)
-    : null;
+  const selectedMarket = activeBetModal ? markets.find(m => m.objectId === activeBetModal) : null;
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Markets</h1>
-            <p className="text-gray-400">Browse and bet on in-game performance</p>
-          </div>
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-4 py-2 rounded bg-[#F6B17A] text-black font-bold hover:bg-[#e59f6a]"
-          >
-            {showCreateForm ? "Cancel" : "+ Create Market"}
-          </button>
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-10 border-b border-dim pb-6 gap-6">
+        <div>
+          <h1 className="text-4xl lg:text-5xl font-display font-bold uppercase tracking-tighter text-bright mb-2">Liquidity Desks</h1>
+          <p className="font-mono text-dim text-sm uppercase max-w-xl">
+            Orderbook for live prediction markets. Execute trades against verifiable smart contracts.
+          </p>
         </div>
-
-        {/* Create Form */}
-        {showCreateForm && (
-          <div className="p-6 mb-6 rounded-lg border border-[#252a38] bg-[#11131a]">
-            <h3 className="text-lg font-semibold mb-4">Create New Market</h3>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="text-sm text-gray-400 block mb-1">Match ID</label>
-                <input
-                  type="number"
-                  value={newMatchId}
-                  onChange={(e) => setNewMatchId(Number(e.target.value))}
-                  className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 block mb-1">Duration (ms)</label>
-                <input
-                  type="number"
-                  value={newDeadline}
-                  onChange={(e) => setNewDeadline(Number(e.target.value))}
-                  className="w-full p-2 rounded bg-[#181c25] border border-[#252a38]"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={handleCreateMarket}
-                  disabled={isCreating}
-                  className="w-full py-2 rounded bg-[#F6B17A] text-black font-bold hover:bg-[#e59f6a] disabled:opacity-50"
-                >
-                  {isCreating ? "Creating..." : "Create Market"}
-                </button>
-              </div>
-            </div>
-            {createError && (
-              <div className="p-3 rounded bg-red-900/30 text-red-400 text-sm">
-                Error: {createError}
-              </div>
-            )}
-            {createTxHash && (
-              <div className="p-3 rounded bg-green-900/30 text-green-400 text-sm">
-                ✓ Market created! TX: {createTxHash.slice(0, 30)}...
-              </div>
-            )}
-            {!account && (
-              <p className="text-yellow-400 text-sm mt-2">Connect wallet to create markets</p>
-            )}
-          </div>
-        )}
-
-        {/* Error banner */}
-        {marketsError && (
-          <div className="p-4 mb-4 rounded bg-red-900/30 text-red-400">
-            Error loading markets: {marketsError}
-          </div>
-        )}
-
-        {/* Loading */}
-        {marketsLoading && (
-          <div className="text-center py-20">
-            <div className="inline-block w-8 h-8 border-2 border-gray-600 border-t-[#F6B17A] rounded-full animate-spin mb-4" />
-            <p className="text-gray-400">Loading markets...</p>
-          </div>
-        )}
-
-        {/* Markets Grid */}
-        {!marketsLoading && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMarkets.map((market) => (
-              <MarketCard
-                key={market.objectId}
-                market={market}
-                onPlaceBet={() => setActiveBetModal(market.objectId)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!marketsLoading && filteredMarkets.length === 0 && (
-          <div className="text-center py-20">
-            <Icons.game size={48} className="mx-auto mb-4 text-gray-600" />
-            <h3 className="text-xl font-semibold mb-2">No markets yet</h3>
-            <p className="text-gray-400">Create a market to get started!</p>
-          </div>
-        )}
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className={`px-5 py-2.5 font-display font-bold tracking-widest text-sm uppercase border transition-colors ${showCreateForm ? 'bg-surface border-dim text-bright' : 'bg-void border-bright text-bright hover:bg-bright hover:text-void'}`}
+        >
+          {showCreateForm ? "[ CLOSE TERMINAL ]" : "[ + INIT MARKET ]"}
+        </button>
       </div>
 
-      {/* Bet Modal */}
+      {/* Admin Create Form */}
+      {showCreateForm && (
+        <div className="p-6 mb-10 border border-accent-primary bg-panel shadow-[4px_4px_0_var(--accent-primary)] animate-fade-in-down">
+          <div className="flex items-center gap-3 mb-6 pb-3 border-b border-dim">
+            <span className="w-2 h-2 bg-accent-primary animate-pulse" />
+            <h3 className="text-lg font-display font-bold uppercase tracking-widest text-bright">Deploy New Market</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label className="text-xs font-mono text-dim uppercase block mb-2">Target Match Node (ID)</label>
+              <input
+                type="number"
+                value={newMatchId}
+                onChange={(e) => setNewMatchId(Number(e.target.value))}
+                className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono text-dim uppercase block mb-2">TTL Duration (MS)</label>
+              <input
+                type="number"
+                value={newDeadline}
+                onChange={(e) => setNewDeadline(Number(e.target.value))}
+                className="w-full p-3 bg-void border border-dim text-bright font-mono text-sm focus:border-accent-primary focus:outline-none"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={handleCreateMarket}
+                disabled={isCreating}
+                className="w-full py-3.5 font-display font-bold uppercase tracking-widest bg-accent-primary text-void hover:bg-[#B0DF00] transition-colors disabled:opacity-50"
+              >
+                {isCreating ? "Deploying..." : "Execute Deploy"}
+              </button>
+            </div>
+          </div>
+          
+          {createError && (
+            <div className="p-3 bg-void border border-status-error text-status-error text-xs font-mono uppercase">
+              ERR: {createError}
+            </div>
+          )}
+          {createTxHash && (
+            <div className="p-3 bg-void border border-status-success text-status-success text-xs font-mono uppercase">
+              SUCCESS / TX: {createTxHash.slice(0, 30)}...
+            </div>
+          )}
+          {!account && (
+            <p className="text-status-warning text-xs mt-2 font-mono uppercase border-l-2 border-status-warning pl-2">WARN: Wallet connection absent.</p>
+          )}
+        </div>
+      )}
+
+      {/* System Status / Error */}
+      {marketsError && (
+        <div className="p-4 mb-8 border border-status-error bg-void text-status-error font-mono text-sm uppercase">
+          SYS_ERR: {marketsError}
+        </div>
+      )}
+
+      {marketsLoading && (
+        <div className="flex flex-col items-center justify-center py-32 border border-dim border-dashed bg-panel">
+          <div className="w-12 h-12 border-2 border-dim border-t-accent-primary rounded-none animate-spin mb-4" />
+          <p className="font-mono text-dim text-xs uppercase tracking-widest">Compiling Market Index...</p>
+        </div>
+      )}
+
+      {!marketsLoading && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredMarkets.map((market) => (
+            <MarketCard
+              key={market.objectId}
+              market={market}
+              onPlaceBet={() => setActiveBetModal(market.objectId)}
+            />
+          ))}
+        </div>
+      )}
+
+      {!marketsLoading && filteredMarkets.length === 0 && (
+        <div className="text-center py-32 border border-dim border-dashed bg-panel">
+          <Icons.game size={32} className="mx-auto mb-4 text-dim" />
+          <p className="font-mono text-dim text-sm uppercase tracking-widest">No Active Markets Detected</p>
+        </div>
+      )}
+
+      {/* Modals */}
       {selectedMarket && (
         <PlaceBetModal
           marketId={selectedMarket.objectId}

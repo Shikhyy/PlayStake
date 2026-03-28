@@ -7,21 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        slate: {
-          850: '#1a2332',
+        lime: {
+          400: '#CEFF00', // Our electric lime main color
+          500: '#B0DF00',
         },
-        void: '#050508',
-        deep: '#0a0b10',
-        primary: '#2D3250',
-        secondary: '#424769',
-        lavender: '#B7BDF7',
-        orange: '#F6B17A',
-        crimson: '#FF3366',
-        dim: '#9ca3b4'
+        zinc: {
+          850: '#1f1f22',
+          900: '#18181b',
+          950: '#09090b',
+        },
+        void: '#000000',
+        panel: '#0C0C0C',
+        surface: '#121212',
+        dim: '#71717A',
+        normal: '#A1A1AA',
+        bright: '#FFFFFF',
+        error: '#FF3366',
+        success: '#00FF66',
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['"Space Grotesk"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out forwards',

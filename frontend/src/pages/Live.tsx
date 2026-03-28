@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCurrentAccount, useSuiClient } from "@onelabs/dapp-kit";
 import { usePostMatchResult, useAddPlayerStats, useAllMatchResults } from "../hooks/useMarket";
-import { Icons, getIcon } from "../components/Icons";
+import { Icons } from "../components/Icons";
 
 interface PlayerStat {
   address: string;
@@ -40,14 +40,6 @@ function parseVecMap(vecMap: unknown): Map<string, PlayerStat> {
     }
   }
   return result;
-}
-
-function getRankBadgeClass(rank: number) {
-  if (rank === 1) return "rank-diamond shadow-[0_0_15px_rgba(0,191,255,0.4)] text-black";
-  if (rank === 2) return "rank-platinum text-black";
-  if (rank === 3) return "rank-gold text-black";
-  if (rank <= 10) return "rank-silver text-black";
-  return "rank-bronze text-white";
 }
 
 export default function Live() {
@@ -97,9 +89,9 @@ export default function Live() {
 
   const handlePostToChain = async () => {
     if (!account) return;
-    const matchIdStr = prompt("Enter Match ID to post result for:");
+    const matchIdStr = prompt("SYSTEM: Enter Match ID parameter:");
     if (!matchIdStr) return;
-    const oracleCapId = prompt("Enter your OracleCap Object ID:");
+    const oracleCapId = prompt("SYSTEM: Enter OracleCap Object ID:");
     if (!oracleCapId) return;
     await postResult(oracleCapId, Number(matchIdStr), Date.now() + 5000);
   };
@@ -125,248 +117,197 @@ export default function Live() {
   });
 
   const finalizedTime = selectedResult
-    ? new Date(selectedResult.finalizedAt).toLocaleString()
+    ? new Date(selectedResult.finalizedAt).toISOString().split('T')[1].split('.')[0] + ' UTC'
     : "—";
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold font-display gradient-text-gaming">Live Matches</h1>
-              <span className="badge-game badge-red">
-                <span className="w-2 h-2 bg-accent-crimson rounded-full relative">
-                  <span className="absolute inset-0 bg-accent-crimson rounded-full animate-ping" />
-                </span>
-                {results.length} ON-CHAIN
-              </span>
-            </div>
-            <p className="text-dim font-tech">Oracle-verified match results on OneChain</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
-            <span className="text-xs font-tech text-dim">On-Chain Data</span>
-          </div>
-        </div>
-
-        {/* Oracle Actions */}
-        <div className="glass-panel p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-tech text-dim">
-              Oracle: Posting verified stats to blockchain
-              {selectedResult && <strong className="text-normal ml-1">Match #{selectedResult.matchId}</strong>}
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 pb-6 border-b border-dim gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-3 h-3 bg-status-success animate-pulse border border-void shadow-[0_0_10px_var(--status-success)]" />
+            <span className="text-xs font-mono font-bold uppercase tracking-widest text-status-success">
+              Oracle Stream Active
             </span>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handlePostToChain}
-              disabled={postingResult || addingStats || !account}
-              className="btn-game btn-gold text-xs px-4 py-2 flex items-center gap-2"
-            >
-              {postingResult ? "Posting..." : <><Icons.externalLink size={14} /> Post Match Result</>}
-            </button>
-            <button
-              onClick={handleAddStats}
-              disabled={postingResult || addingStats || !account || !selectedResult}
-              className="btn-game btn-secondary-game text-xs px-4 py-2"
-            >
-              Add Stats
-            </button>
-          </div>
+          <h1 className="text-4xl lg:text-5xl font-display font-bold uppercase tracking-tighter text-bright">Telemetry Feed</h1>
         </div>
+        
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handlePostToChain}
+            disabled={postingResult || addingStats || !account}
+            className="px-4 py-2 font-mono text-[10px] uppercase font-bold border border-dim text-dim hover:text-bright hover:border-bright transition-colors disabled:opacity-50"
+          >
+            {postingResult ? "[ POSTING... ]" : "[ INJECT MATCH RESULT ]"}
+          </button>
+          <button
+            onClick={handleAddStats}
+            disabled={postingResult || addingStats || !account || !selectedResult}
+            className="px-4 py-2 font-mono text-[10px] uppercase font-bold border border-dim text-dim hover:text-bright hover:border-bright transition-colors disabled:opacity-50"
+          >
+            [ SYNC PLAYER STATS ]
+          </button>
+        </div>
+      </div>
 
-        {/* Match Selector */}
+      {/* Match Selector Strip */}
+      <div className="mb-10 flex overflow-x-auto no-scrollbar gap-4 pb-4 border-b border-dim border-dashed">
+        <div className="sticky left-0 flex-shrink-0 flex items-center bg-void z-10 pr-4 border-r border-dim border-dashed">
+          <span className="font-mono text-[10px] uppercase text-dim tracking-widest">Select Node:</span>
+        </div>
         {resultsLoading ? (
-          <div className="text-center py-8 mb-8">
-            <div className="inline-block w-8 h-8 border-2 border-dim border-t-accent-lavender rounded-full animate-spin mb-4" />
-            <p className="text-dim font-tech">Loading match results from blockchain...</p>
+          <div className="font-mono text-xs text-dim uppercase flex items-center gap-2">
+            <span className="w-2 h-2 bg-dim animate-spin" /> Fetching blocks...
           </div>
         ) : results.length === 0 ? (
-          <div className="text-center py-8 mb-8 card-game">
-            <div className="text-5xl mb-4 text-accent-lavender flex justify-center">
-              {getIcon("trophy" as keyof typeof Icons, { size: 48 })}
-            </div>
-            <p className="text-dim font-tech mb-4">No match results on-chain yet.</p>
-            <p className="text-dim font-tech text-sm">The oracle posts verified results here after each match.</p>
-          </div>
+          <div className="font-mono text-xs text-dim uppercase">No records found.</div>
         ) : (
-          <div className="flex gap-4 mb-8 overflow-x-auto pb-2 no-scrollbar">
-            {results.map((r) => (
-              <button
-                key={r.objectId}
-                onClick={() => handleResultSelect(r)}
-                className={`flex-shrink-0 card-game p-4 min-w-[200px] ${selectedResult?.objectId === r.objectId ? "border-accent-lavender" : ""}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-accent-crimson rounded-full animate-pulse-glow" />
-                    <span className="font-semibold font-display">Match #{r.matchId}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-dim font-tech">
-                  <span>{r.playerCount} players</span>
-                  <span className="badge-game badge-green text-[10px]">On-chain</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Main Content */}
-        {isLoadingResult ? (
-          <div className="text-center py-20">
-            <div className="inline-block w-8 h-8 border-2 border-dim border-t-accent-lavender rounded-full animate-spin mb-4" />
-            <p className="text-dim font-tech">Loading player stats...</p>
-          </div>
-        ) : selectedResult ? (
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <div className="card-game p-6">
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-dim">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl border border-dim"
-                         style={{ background: 'linear-gradient(135deg, rgba(87,106,143,0.2), rgba(183,189,247,0.1))' }}>
-                      <Icons.game size={28} className="text-accent-lavender" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold font-display">Match #{selectedResult.matchId}</h2>
-                      <p className="text-sm text-dim font-tech">{selectedResult.objectId.slice(0, 12)}...</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold font-mono font-display text-accent-lavender">{finalizedTime}</div>
-                    <div className="text-xs text-dim font-tech">Finalized On-Chain</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-tech font-medium text-dim uppercase tracking-wider mb-2">
-                  <div className="col-span-1">#</div>
-                  <div className="col-span-4">Player</div>
-                  <div className="col-span-2 text-center">Kills</div>
-                  <div className="col-span-3 text-center">Damage</div>
-                  <div className="col-span-2 text-right">Status</div>
-                </div>
-
-                <div className="space-y-2">
-                  {sortedStats.map((stat, i) => (
-                    <div key={stat.address}
-                      className={`grid grid-cols-12 gap-4 px-4 py-3 rounded-xl transition-all ${stat.alive ? "bg-[#181c25] hover:bg-[#1f2432]" : "bg-[#0a0b10] opacity-60"} ${i === 0 ? "border border-accent-gold/30" : ""}`}
-                    >
-                      <div className="col-span-1 flex items-center">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold font-display ${getRankBadgeClass(i + 1)}`}>
-                          #{i + 1}
-                        </span>
-                      </div>
-                      <div className="col-span-4 flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.alive ? "text-accent-lavender" : "text-dim"}`}>
-                          {stat.alive ? getIcon("game" as keyof typeof Icons, { size: 18 }) : getIcon("skull" as keyof typeof Icons, { size: 18 })}
-                        </div>
-                        <div>
-                          <p className={`font-medium font-mono text-xs ${i === 0 ? "text-accent-gold" : ""}`}>
-                            {stat.address.slice(0, 8)}...{i === 0 && <span className="ml-2">{getIcon("crown" as keyof typeof Icons, { size: 14, className: "text-accent-gold" })}</span>}
-                          </p>
-                          <p className="text-xs text-dim font-tech">K: {stat.kills} G: {stat.gold}</p>
-                        </div>
-                      </div>
-                      <div className="col-span-2 flex items-center justify-center">
-                        <span className="font-mono font-bold">{stat.kills}</span>
-                      </div>
-                      <div className="col-span-3 flex items-center justify-center">
-                        <span className="font-mono font-bold">{stat.damage.toLocaleString()}</span>
-                      </div>
-                      <div className="col-span-2 flex items-end justify-end">
-                        <span className={`badge-game ${stat.alive ? "badge-green" : "badge-red"} text-[10px]`}>
-                          #{stat.placement}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <div className="card-game p-6 text-center">
-                <div className="text-5xl mb-3 text-accent-gold flex justify-center">
-                  {getIcon("crown" as keyof typeof Icons, { size: 48 })}
-                </div>
-                <p className="text-sm text-dim mb-1 font-tech">Current Leader</p>
-                <h3 className="text-xl font-bold font-display mb-4 font-mono text-xs">
-                  {sortedStats[0]?.address.slice(0, 10)}...
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
-                    <p className="text-2xl font-bold font-mono text-accent-lavender">{sortedStats[0]?.damage.toLocaleString()}</p>
-                    <p className="text-xs text-dim font-tech">Damage</p>
-                  </div>
-                  <div className="p-3 rounded-xl" style={{ background: 'var(--bg-raised)' }}>
-                    <p className="text-2xl font-bold font-mono text-accent-crimson">{sortedStats[0]?.kills}</p>
-                    <p className="text-xs text-dim font-tech">Kills</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-game p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 font-display">
-                  <span className="w-2 h-2 rounded-full animate-pulse-glow" style={{ background: '#F6B17A' }} />
-                  Verified Stats
-                </h3>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {sortedStats.slice(0, 10).map((stat) => (
-                    <div key={stat.address} className="p-3 rounded-xl transition-all"
-                      style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-dim)' }}>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-mono text-xs">{stat.address.slice(0, 8)}...</span>
-                        <span className="text-xs text-dim font-mono">{stat.damage.toLocaleString()}</span>
-                      </div>
-                      <div className="flex gap-3 mt-1 text-[10px] text-dim font-tech">
-                        <span>K: {stat.kills}</span>
-                        <span>G: {stat.gold}</span>
-                        <span>#{stat.placement}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="card-game p-6">
-                <h3 className="text-lg font-bold mb-4 font-display">Match Stats</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-dim font-tech">Total Damage</span>
-                    <span className="font-mono font-semibold">
-                      {(liveStats.reduce((sum, s) => sum + s.damage, 0) / 1000).toFixed(1)}K
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-dim font-tech">Total Kills</span>
-                    <span className="font-mono font-semibold">{liveStats.reduce((sum, s) => sum + s.kills, 0)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-dim font-tech">Players</span>
-                    <span className="font-mono font-semibold">{liveStats.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-dim font-tech">Result ID</span>
-                    <span className="font-mono font-semibold text-xs">{selectedResult.objectId.slice(0, 6)}...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-20 card-game">
-            <div className="text-5xl mb-4 text-accent-lavender flex justify-center">
-              {getIcon("trophy" as keyof typeof Icons, { size: 48 })}
-            </div>
-            <h3 className="text-xl font-semibold mb-2 font-display">No Match Selected</h3>
-            <p className="text-dim font-tech">Select a match from the list above to view verified on-chain stats.</p>
-          </div>
+          results.map((r) => (
+            <button
+              key={r.objectId}
+              onClick={() => handleResultSelect(r)}
+              className={`flex-shrink-0 px-4 py-2.5 font-mono text-xs uppercase tracking-widest border transition-colors flex items-center gap-3 ${selectedMarket(r.objectId, selectedResult?.objectId)}`}
+            >
+              <span className="font-bold">ID: {r.matchId}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${r.playerCount > 0 ? "bg-status-success" : "bg-dim"}`} />
+            </button>
+          ))
         )}
       </div>
+
+      {/* Main Content Dashboard */}
+      {isLoadingResult ? (
+        <div className="py-32 flex flex-col items-center justify-center border border-dim bg-panel">
+          <div className="w-8 h-8 border border-dim border-t-bright rounded-none animate-spin mb-4" />
+          <p className="font-mono text-xs text-dim uppercase tracking-widest">Decoding payload...</p>
+        </div>
+      ) : selectedResult ? (
+        <div className="grid lg:grid-cols-4 gap-6">
+          
+          {/* Main Leaderboard */}
+          <div className="lg:col-span-3 border border-dim bg-panel">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 border-b border-dim bg-surface">
+              <div className="flex gap-4 items-center">
+                <div className="w-10 h-10 border border-dim bg-void flex items-center justify-center">
+                  <Icons.award size={16} className="text-bright" />
+                </div>
+                <div>
+                  <h2 className="font-display font-bold text-2xl uppercase tracking-widest text-bright">Match #{selectedResult.matchId}</h2>
+                  <p className="font-mono text-[10px] text-faint uppercase">TX: {selectedResult.objectId}</p>
+                </div>
+              </div>
+              <div className="mt-4 sm:mt-0 text-right">
+                <div className="font-mono text-xl tracking-tighter text-accent-primary font-bold">{finalizedTime}</div>
+                <div className="font-mono text-[10px] uppercase text-dim">Chain Finality</div>
+              </div>
+            </div>
+
+            {/* Terminal Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-dim bg-void">
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest">Rank</th>
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest">Public Key</th>
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest text-right">Elims</th>
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest text-right">Damage</th>
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest text-right">Econ</th>
+                    <th className="py-3 px-4 text-dim font-normal uppercase tracking-widest text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dim/50">
+                  {sortedStats.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-dim uppercase">
+                        Awaiting player synchronization...
+                      </td>
+                    </tr>
+                  ) : sortedStats.map((stat, i) => (
+                    <tr key={stat.address} className={`hover:bg-surface transition-colors ${i === 0 ? "bg-accent-primary/10 border-l-[3px] border-l-accent-primary" : "border-l-[3px] border-l-transparent"} ${!stat.alive ? "opacity-50" : ""}`}>
+                      <td className="py-4 px-4 font-bold text-bright">{i + 1}</td>
+                      <td className="py-4 px-4 font-bold text-accent-primary underline decoration-dim underline-offset-4 cursor-pointer">{stat.address.slice(0, 10)}...</td>
+                      <td className="py-4 px-4 text-right text-bright">{stat.kills}</td>
+                      <td className="py-4 px-4 text-right font-bold tracking-tighter text-sm">{stat.damage.toLocaleString()}</td>
+                      <td className="py-4 px-4 text-right">{stat.gold.toLocaleString()}</td>
+                      <td className="py-4 px-4 text-right">
+                        <span className={`px-2 py-1 uppercase text-[9px] font-bold tracking-widest border ${stat.alive ? "border-status-success text-status-success bg-status-success/10" : "border-status-error text-status-error bg-status-error/10"}`}>
+                          {stat.alive ? "SURVIVED" : "KIA"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Side Panels */}
+          <div className="space-y-6">
+            
+            {/* MVP Panel */}
+            <div className="border border-dim bg-panel p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 border-l border-b border-dim flex items-center justify-center bg-surface">
+                <Icons.crown size={20} className="text-accent-primary" />
+              </div>
+              
+              <div className="font-mono text-[10px] uppercase text-dim tracking-widest mb-4">Prime Asset (MVP)</div>
+              <h3 className="font-display font-bold text-xl text-bright mb-6 max-w-[80%]">
+                {sortedStats[0]?.address.slice(0, 10) || "UNKNOWN"}
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-[1px] bg-dim border border-dim">
+                <div className="bg-panel p-3">
+                  <div className="font-mono text-xl tracking-tighter text-accent-primary font-bold">{sortedStats[0]?.damage.toLocaleString() || 0}</div>
+                  <div className="font-mono text-[9px] uppercase text-dim">Global DMG</div>
+                </div>
+                <div className="bg-panel p-3">
+                  <div className="font-mono text-xl tracking-tighter text-bright font-bold">{sortedStats[0]?.kills || 0}</div>
+                  <div className="font-mono text-[9px] uppercase text-dim">Total Elims</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Aggregated Data */}
+            <div className="border border-dim bg-panel p-5">
+              <div className="font-mono text-[10px] uppercase text-dim tracking-widest mb-4 pb-2 border-b border-dim">Session Telemetry</div>
+              <ul className="space-y-3 font-mono text-xs">
+                <li className="flex justify-between">
+                  <span className="text-dim">Aggregated Output</span>
+                  <span className="text-bright font-bold">{(liveStats.reduce((sum, s) => sum + s.damage, 0) / 1000).toFixed(1)}k</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-dim">Total Casualties</span>
+                  <span className="text-bright font-bold">{liveStats.reduce((sum, s) => sum + s.kills, 0)}</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-dim">Identified Targets</span>
+                  <span className="text-bright font-bold">{liveStats.length}</span>
+                </li>
+                <li className="flex justify-between pt-3 mt-3 border-t border-dim border-dashed">
+                  <span className="text-dim">Block Confirmed</span>
+                  <span className="text-status-success font-bold">TRUE</span>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        <div className="py-32 flex flex-col items-center justify-center border border-dim bg-panel">
+          <Icons.zap size={32} className="text-dim mb-4" />
+          <p className="font-mono text-xs text-dim uppercase tracking-widest">Select a node from the registry above.</p>
+        </div>
+      )}
     </div>
   );
+}
+
+// Logic helper for selected state
+function selectedMarket(currentId: string, selectedId: string | undefined) {
+  if (currentId === selectedId) {
+    return "bg-bright text-void border-bright shadow-[inset_4px_0_0_var(--accent-primary)]";
+  }
+  return "bg-surface text-dim border-dim hover:bg-panel hover:text-bright";
 }
