@@ -74,6 +74,7 @@ async function createMarket() {
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::market::create_market`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [tx.pure.u64(MATCH_ID), tx.pure.u64(DEADLINE)],
   });
 
@@ -93,9 +94,10 @@ async function placeSelfStake() {
   console.log(`  Player balance before: ${fmt(balBefore)}`);
 
   const tx = new Transaction();
-  const [payment] = tx.splitCoins(tx.gas, [sui(0.5)]);
+  const [payment] = tx.splitCoins(tx.gas, [sui(0.01)]);
   tx.moveCall({
     target: `${PACKAGE_ID}::market::place_bet`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [
       tx.object(marketObjectId),
       tx.pure.address(player.getPublicKey().toSuiAddress()),
@@ -120,9 +122,10 @@ async function placeSpectatorBet() {
   section("STEP 3 — Spectator Bets on Player (0.1 SUI)");
 
   const tx = new Transaction();
-  const [payment] = tx.splitCoins(tx.gas, [sui(0.1)]);
+  const [payment] = tx.splitCoins(tx.gas, [sui(0.01)]);
   tx.moveCall({
     target: `${PACKAGE_ID}::market::place_bet`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [
       tx.object(marketObjectId),
       tx.pure.address(player.getPublicKey().toSuiAddress()),
@@ -198,6 +201,7 @@ async function settleAll() {
   const tx0 = new Transaction();
   tx0.moveCall({
     target: `${PACKAGE_ID}::oracle::finalize_market`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [tx0.object(capId), tx0.object(marketObjectId)],
   });
   await signAndExec(tx0, oracleSigner);
@@ -207,6 +211,7 @@ async function settleAll() {
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::settle::settle_bet_entry`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [
       tx.object(marketObjectId),
       tx.object(playerBetId),
@@ -221,6 +226,7 @@ async function settleAll() {
   const tx2 = new Transaction();
   tx2.moveCall({
     target: `${PACKAGE_ID}::settle::settle_bet_entry`,
+    typeArguments: ["0x2::oct::OCT"],
     arguments: [
       tx2.object(marketObjectId),
       tx2.object(spectatorBetId),

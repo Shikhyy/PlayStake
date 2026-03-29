@@ -24,6 +24,13 @@ export default {
         bright: '#FFFFFF',
         error: '#FF3366',
         success: '#00FF66',
+        'accent-primary': '#CEFF00',
+        'accent-secondary': '#ffffff',
+        'accent-muted': '#52525B',
+        'accent-lavender': '#a78bfa',
+        'status-success': '#00FF66',
+        'status-error': '#FF3366',
+        'status-warning': '#CEFF00',
       },
       fontFamily: {
         sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],

@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useCurrentAccount, useSuiClient } from "@onelabs/dapp-kit";
 import { usePostMatchResult, useAddPlayerStats, useAllMatchResults } from "../hooks/useMarket";
 import { Icons } from "../components/Icons";
+import { SUPPORTED_GAMES } from "../constants/games";
 
-const ORACLE_CAP_ID = "0x797af785ba04d3de243eb2e8e9d80a5f6c3eb71f19360b3c0fdedba11b105de4";
+import { ORACLE_CAP_ID } from "../constants";
 
-const GAMES = ["Call of Duty Mobile", "PUBG Mobile", "Valorant", "Arena of Valor", "League of Legends", "Fortnite"];
+const GAMES = SUPPORTED_GAMES.map((g) => g.name);
 
 async function generateAIMatchStats(game: string, playerCount: number = 8) {
   const gameSpecifics: Record<string, { damageRange: [number, number], killsRange: [number, number], goldRange?: [number, number], placement: boolean }> = {

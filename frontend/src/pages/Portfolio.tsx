@@ -218,7 +218,7 @@ export default function Portfolio() {
                       </td>
                       <td className="py-5 px-6">
                         <span className="bg-void border border-dim px-2 py-1 text-bright">
-                          {["DMG","ELIMS","RANK","GOLD"][bet.claim.stat]} ≥ {bet.claim.threshold.toLocaleString()}
+                          {["DMG","ELIMS","RANK","GOLD"][bet.claim.stat]} {["≥", "≤", "=="][bet.claim.operator]} {bet.claim.threshold.toLocaleString()}
                         </span>
                       </td>
                       <td className="py-5 px-6 text-right font-bold text-bright">{bet.stakeUsdo.toFixed(2)}</td>

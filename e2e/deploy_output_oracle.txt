@@ -1,0 +1,12 @@
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+Deploying with Oracle Address: 0x7ced5a37f7a2170764acfb485720d424e810bd1396131f043ac4eca3779aecee
+Compiling Move contracts...
+Publishing 4 modules...
+
+=================================
+DEPLOYMENT SUCCESSFUL
+=================================
+PACKAGE_ID=0xc023076e6787351f90b712caa292981e2ae680a3b9d8f03abf7fb2228c1dcd9c
+ORACLE_CAP_ID=0x7a3a60a1814d428c61dace05b79df4480eeb44d973d0e93e6974c8d1349b9dad
+=================================
+

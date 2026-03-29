@@ -1,0 +1,12 @@
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+Deploying with Oracle Address: 0x91a6f0790bb8970a9148108445110751099f3846ff9729e37e939a5f6a48c6f3
+Compiling Move contracts...
+Publishing 4 modules...
+
+=================================
+DEPLOYMENT SUCCESSFUL
+=================================
+PACKAGE_ID=0x8456313197dd5ecf56bbf81d63740b2b703d06989998a53effbdc73595bfc681
+ORACLE_CAP_ID=0x2f0e9ee7afc1b2589ef313fc0de84c07858905ca34294228b40ed5aee348694e
+=================================
+

@@ -6,7 +6,7 @@ import {
   useSuiClient,
 } from "@onelabs/dapp-kit";
 import { Transaction } from "@onelabs/sui/transactions";
-import { fromUsdo, toUsdo, MODULES, STAT, OP } from "../constants";
+import { fromUsdo, toUsdo, MODULES, STAT, OP, USDO_TYPE } from "../constants";
 import { useTxToast } from "../components/TxToast";
 import { 
   getAllMarkets, 
@@ -87,6 +87,7 @@ export function usePlaceBet() {
 
         tx.moveCall({
           target: `${MODULES.market}::place_bet`,
+          typeArguments: [USDO_TYPE],
           arguments: [
             tx.object(marketObjectId),
             tx.pure.address(params.subject),
@@ -158,6 +159,7 @@ export function useCreateMarket() {
         
         tx.moveCall({
           target: target,
+          typeArguments: [USDO_TYPE],
           arguments: [tx.pure.u64(matchId), tx.pure.u64(deadlineMs)],
         });
         
@@ -250,8 +252,8 @@ export function useMarket(marketObjectId: string | null): {
       setMarket({
         objectId: marketObjectId,
         matchId: String(f.match_id || 0),
-        yesPool: toUsdo(BigInt(Number(f.yes_pool) || 0)),
-        noPool: toUsdo(BigInt(Number(f.no_pool) || 0)),
+        yesPool: toUsdo(BigInt(String(f.yes_pool || "0"))),
+        noPool: toUsdo(BigInt(String(f.no_pool || "0"))),
         deadlineMs: Number(f.deadline_ms || 0),
         finalized: Boolean(f.finalized),
         betIds: (f.bet_ids as string[]) || [],
@@ -290,7 +292,7 @@ export function useMyBets(walletAddress: string | null): {
         const content = (data as { content?: { fields?: Record<string, unknown> } }).content;
         const f = parseMoveFields(content?.fields || {});
         const claimF = parseMoveFields((f.claim as Record<string, unknown>) || {});
-        const stakeRaw = BigInt(Number(f.stake || 0));
+        const stakeRaw = BigInt(String(f.stake || "0"));
         parsed.push({
           objectId: data.objectId,
           matchId: String(f.match_id || "0"),
@@ -344,8 +346,8 @@ export function useMySettlements(walletAddress: string | null): {
         parsed.push({
           objectId: data.objectId,
           betId: String(f.bet_id || ""),
-          payout: toUsdo(BigInt(Number(f.payout || 0))),
-          stake: toUsdo(BigInt(Number(f.stake || 0))),
+          payout: toUsdo(BigInt(String(f.payout || "0"))),
+          stake: toUsdo(BigInt(String(f.stake || "0"))),
           won: Boolean(f.won),
         });
       }
@@ -378,6 +380,7 @@ export function useSettleAll() {
         for (const betId of betObjectIds) {
           tx.moveCall({
             target: `${MODULES.settle}::settle_bet_entry`,
+            typeArguments: [USDO_TYPE],
             arguments: [
               tx.object(marketObjectId),
               tx.object(betId),
@@ -493,6 +496,7 @@ export function useFinalizeMarket() {
         const tx = new Transaction();
         tx.moveCall({
           target: `${MODULES.oracle}::finalize_market`,
+          typeArguments: [USDO_TYPE],
           arguments: [tx.object(oracleCapId), tx.object(marketObjectId)],
         });
         const result = await signAndExecute({ transaction: tx });
@@ -543,8 +547,8 @@ function parseMarketFields(objectId: string, fields: Record<string, unknown>): M
   return {
     objectId,
     matchId: String(fields.match_id || 0),
-    yesPool: toUsdo(BigInt(Number(fields.yes_pool || 0))),
-    noPool: toUsdo(BigInt(Number(fields.no_pool || 0))),
+    yesPool: toUsdo(BigInt(String(fields.yes_pool || "0"))),
+    noPool: toUsdo(BigInt(String(fields.no_pool || "0"))),
     betCount: betIds.length,
     deadlineMs: Number(fields.deadline_ms || 0),
     finalized: Boolean(fields.finalized),
@@ -569,14 +573,12 @@ export function getStoredMarketIds(): string[] {
   try {
     const stored = localStorage.getItem("playstake_market_ids");
     const ids = stored ? JSON.parse(stored) : [];
-    // Add known market if none exist
-    const defaultMarket = "0xb868d69da43af997a3f4fddcb96f847d985141afaf2a94aa110adefe3e4f007b";
     if (ids.length === 0) {
-      return [defaultMarket];
+      return [];
     }
     return ids;
   } catch {
-    return ["0xb868d69da43af997a3f4fddcb96f847d985141afaf2a94aa110adefe3e4f007b"];
+    return [];
   }
 }
 
@@ -765,8 +767,8 @@ export function useAllSettlements(): {
           betId: String(f.bet_id || ""),
           bettor: String(f.bettor || ""),
           won: Boolean(f.won),
-          stake: toUsdo(BigInt(Number(f.stake || 0))),
-          payout: toUsdo(BigInt(Number(f.payout || 0))),
+          stake: toUsdo(BigInt(String(f.stake || "0"))),
+          payout: toUsdo(BigInt(String(f.payout || "0"))),
         });
       }
       setSettlements(parsed);

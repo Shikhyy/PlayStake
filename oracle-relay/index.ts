@@ -112,7 +112,7 @@ function broadcast(matchId: string, payload: object) {
   const msg = JSON.stringify(payload);
   subscribers.get(matchId)?.forEach((ws) => {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(msg).catch(console.error);
+      ws.send(msg, (err) => { if (err) console.error(err); });
     }
   });
 }
@@ -175,7 +175,7 @@ async function postResultOnChain(
 
     const tx1 = new Transaction();
     tx1.setSenderIfNotSet(oracleAddr);
-    tx1.setGasBudget("10000000");
+    tx1.setGasBudget(10000000);
     tx1.moveCall({
       target: `${PACKAGE_ID}::oracle::post_result`,
       arguments: [
@@ -211,7 +211,7 @@ async function postResultOnChain(
     if (playerStats.length > 0) {
       const tx2 = new Transaction();
       tx2.setSenderIfNotSet(oracleAddr);
-      tx2.setGasBudget("10000000");
+      tx2.setGasBudget(10000000);
       for (const p of playerStats) {
         tx2.moveCall({
           target: `${PACKAGE_ID}::oracle::add_player_stats`,

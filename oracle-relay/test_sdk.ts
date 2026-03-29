@@ -1,6 +1,6 @@
-import { Client } from "@onelabs/sui";
+import { SuiClient } from "@onelabs/sui/client";
 
-const client = new Client({ rpcUrl: "https://rpc-testnet.onelabs.cc:443" });
+const client = new SuiClient({ url: "https://rpc-testnet.onelabs.cc:443" });
 client.getChainIdentifier()
-  .then(r => console.log("Chain:", r))
-  .catch(e => console.error("Error:", e.message));
+  .then((r: any) => console.log("Chain:", r))
+  .catch((e: any) => console.error("Error:", e.message));

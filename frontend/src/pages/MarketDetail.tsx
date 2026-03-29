@@ -404,7 +404,7 @@ export default function MarketDetail() {
                           </td>
                           <td className="py-4 px-3">
                             <p className="font-mono text-sm">
-                              {STAT_NAMES[bet.claim.stat] || 'Unknown'} ≥ {bet.claim.threshold.toLocaleString()}
+                              {STAT_NAMES[bet.claim.stat] || 'Unknown'} {["≥", "≤", "=="][bet.claim.operator]} {bet.claim.threshold.toLocaleString()}
                             </p>
                             <p className="text-[10px] text-dim font-tech">
                               Subject: {bet.subject.slice(0, 8)}...{bet.subject.slice(-4)}

@@ -7,7 +7,7 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const RPC_URL = process.env.RPC_URL || "https://rpc-testnet.onelabs.cc:443";
-const PACKAGE_ID = process.env.PACKAGE_ID || "0xa8111bccb58757c9ef3d880e0667b53576648e6f5b3f9286a817e39cb34e3cc9";
+const PACKAGE_ID = process.env.PACKAGE_ID || "0xc023076e6787351f90b712caa292981e2ae680a3b9d8f03abf7fb2228c1dcd9c";
 
 if (!GROQ_API_KEY || !SUPABASE_URL || !SUPABASE_KEY) {
   console.error("❌ Error: Missing environment variables (GROQ_API_KEY, SUPABASE_URL, SUPABASE_KEY)");
@@ -122,6 +122,7 @@ async function createOnChainMarket(matchId: number, deadlineMs: number): Promise
     
     tx.moveCall({
       target: `${PACKAGE_ID}::market::create_market`,
+      typeArguments: ["0x2::oct::OCT"],
       arguments: [tx.pure.u64(matchId), tx.pure.u64(deadlineMs)],
     });
 

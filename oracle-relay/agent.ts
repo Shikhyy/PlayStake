@@ -58,7 +58,7 @@ async function signAndExec(tx: Transaction): Promise<any> {
   tx.setGasBudget(10000000);
   const txBytes = await tx.build({ client });
   const { bytes: txB64, signature: sigB64 } = await agentKeypair.signTransaction(txBytes);
-  const result = await client.call("sui_executeTransactionBlock", [
+  const result: any = await client.call("sui_executeTransactionBlock", [
     txB64, [sigB64],
     { showEffects: true, showObjectChanges: true },
     "WaitForEffectsCert",
